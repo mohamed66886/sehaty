@@ -9,6 +9,11 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  signInWithPopup,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  GithubAuthProvider,
+  OAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { getUser } from '@/lib/firebase/firestore';
@@ -20,6 +25,10 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
+  signInWithGithub: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -89,6 +98,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleSocialSignIn(userCredential.user);
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      const provider = new FacebookAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleSocialSignIn(userCredential.user);
+    } catch (error) {
+      console.error('Facebook sign in error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithGithub = async () => {
+    try {
+      const provider = new GithubAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleSocialSignIn(userCredential.user);
+    } catch (error) {
+      console.error('Github sign in error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleSocialSignIn(userCredential.user);
+    } catch (error) {
+      console.error('Apple sign in error:', error);
+      throw error;
+    }
+  };
+
+  const handleSocialSignIn = async (firebaseUser: FirebaseUser) => {
+    try {
+      let userData = await getUser(firebaseUser.uid);
+      
+      // If user doesn't exist in Firestore, create a basic profile
+      if (!userData) {
+        // For now, redirect to a setup page or set a default role
+        // You might want to create a new user document here
+        console.log('New user from social login, needs profile setup');
+        router.push('/setup-profile');
+        return;
+      }
+
+      // Force super_admin role for specific email
+      if (firebaseUser.email === 'mohamedabdouooo28@gmail.com') {
+        userData = { ...userData, role: 'super_admin' as UserRole };
+      }
+
+      // Redirect based on role
+      redirectByRole(userData.role);
+    } catch (error) {
+      console.error('Handle social sign in error:', error);
+      throw error;
+    }
+  };
+
   const resetPassword = async (email: string) => {
     try {
       await sendPasswordResetEmail(auth, email);
@@ -122,6 +206,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     firebaseUser,
     loading,
     signIn,
+    signInWithGoogle,
+    signInWithFacebook,
+    signInWithGithub,
+    signInWithApple,
     signOut,
     resetPassword,
   };

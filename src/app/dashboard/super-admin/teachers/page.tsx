@@ -39,6 +39,21 @@ export default function TeachersPage() {
   const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check if window is defined (client-side)
+    if (typeof window !== 'undefined') {
+      setIsMobile(window.innerWidth < 768);
+      
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     loadTeachers();
@@ -343,7 +358,7 @@ export default function TeachersPage() {
                   jump_to: 'الذهاب إلى',
                   page: 'صفحة',
                 },
-                simple: window.innerWidth < 768,
+                simple: isMobile,
                 responsive: true,
               }}
               locale={{

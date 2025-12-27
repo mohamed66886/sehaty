@@ -45,6 +45,21 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState<string>('all');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check if window is defined (client-side)
+    if (typeof window !== 'undefined') {
+      setIsMobile(window.innerWidth < 768);
+      
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -398,7 +413,7 @@ export default function StudentsPage() {
                   jump_to: 'الذهاب إلى',
                   page: 'صفحة',
                 },
-                simple: window.innerWidth < 768,
+                simple: isMobile,
                 responsive: true,
               }}
               locale={{

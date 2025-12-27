@@ -43,6 +43,21 @@ export default function ParentsPage() {
   const [students, setStudents] = useState<Record<string, Student>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check if window is defined (client-side)
+    if (typeof window !== 'undefined') {
+      setIsMobile(window.innerWidth < 768);
+      
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -392,7 +407,7 @@ export default function ParentsPage() {
                   jump_to: 'الذهاب إلى',
                   page: 'صفحة',
                 },
-                simple: window.innerWidth < 768,
+                simple: isMobile,
                 responsive: true,
               }}
               locale={{

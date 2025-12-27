@@ -1,8 +1,12 @@
 'use client';
 
+import { useEffect, useState, useRef } from "react";
 import { ChartIcon, BellIcon, LockIcon, MobileIcon, CheckIcon, NoteIcon, TrendingUpIcon, ChatIcon, TargetIcon } from "@/components/icons/Icons";
 
 export default function Features() {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
   const features = [
     {
       icon: <ChartIcon className="w-8 h-8" />,
@@ -69,8 +73,37 @@ export default function Features() {
     }
   ];
 
+  // Intersection Observer for scroll animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { 
+        threshold: 0.3,
+        rootMargin: '-50px'
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <section id="features" className="relative py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+    <section ref={sectionRef} id="features" className="relative py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
       {/* خلفية زخرفية */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary-400 rounded-full blur-3xl"></div>
@@ -79,55 +112,106 @@ export default function Features() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-4 relative z-10">
         {/* العنوان الرئيسي */}
-        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-          <div className="inline-block mb-3 sm:mb-4">
-            <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary-100 text-primary-700 rounded-full text-xs sm:text-sm font-semibold">
-              لماذا تختار حصتي؟
-            </span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-gray-900 px-4">
-            المميزات
+        <div className={`flex flex-col items-center justify-center mb-16 transition-all duration-1000 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'
+        }`}>
+          {/* Title */}
+          <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
+            <span className="text-gray-900">المميزات . </span>
+            <span className="text-sky-500">المتكاملة</span>
           </h2>
-          <p className="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
+
+          {/* Curve */}
+          <svg
+            className="mt-4 w-full max-w-[280px] sm:max-w-[350px] md:max-w-[420px]"
+            height="40"
+            viewBox="0 0 420 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <path
+              d="M10 30 C 140 5, 280 5, 410 30"
+              stroke="#5BB6E8"
+              strokeWidth="5"
+              strokeLinecap="round"
+              className={`transition-all duration-1000 delay-300 ${
+                isVisible ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{
+                strokeDasharray: isVisible ? '0' : '1000',
+                strokeDashoffset: isVisible ? '0' : '1000',
+              }}
+            />
+          </svg>
+            
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mt-4">
             كل ما تحتاجه لإدارة مركزك التعليمي في منصة واحدة متكاملة
           </p>
         </div>
 
-        {/* بطاقات المميزات */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 mb-16 sm:mb-20 px-2 sm:px-0">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="group bg-white rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100 hover:border-transparent relative overflow-hidden"
-            >
-              {/* تأثير الخلفية عند الهوفر */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
-              <div className="relative z-10">
-                {/* الأيقونة */}
-                <div className={`text-white mb-3 sm:mb-4 lg:mb-6 w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center rounded-lg sm:rounded-xl lg:rounded-2xl bg-gradient-to-br ${feature.color} ${feature.hoverColor} shadow-lg group-hover:shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`}>
-                  <div className="scale-75 sm:scale-90 lg:scale-100">
-                    {feature.icon}
+        {/* المميزات مع الصورة */}
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* الصورة على اليمين */}
+          <div className={`order-1 lg:order-1 transition-all duration-1000 ${
+            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'
+          }`}>
+            <img 
+              src="/sec.png" 
+              alt="منصة حصتي" 
+              className="w-3/5 mx-auto h-auto object-cover"
+            />
+          </div>
+
+          {/* قائمة المميزات على اليسار */}
+          <div className="order-2 lg:order-2">
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-2 transition-all duration-700 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                  }`}
+                  style={{ 
+                    transitionDelay: `${index * 100}ms`
+                  }}
+                >
+                  {/* علامة الصح */}
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center">
+                    <svg 
+                      className="w-4 h-4 text-white" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={3} 
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  
+                  {/* المحتوى */}
+                  <div className="flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-0.5">
+                      {feature.title}
+                    </h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
                 </div>
-                
-                {/* المحتوى */}
-                <h3 className="text-base sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3 lg:mb-4 text-gray-900 group-hover:text-primary-700 transition-colors duration-300">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed text-xs sm:text-base lg:text-lg group-hover:text-gray-700 transition-colors duration-300">
-                  {feature.description}
-                </p>
-              </div>
-
-              {/* خط زخرفي */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
         {/* قسم المعلومات الإضافية */}
-        <div className="mt-12 sm:mt-16 bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl sm:rounded-2xl shadow-xl overflow-hidden mx-2 sm:mx-0">
+        <div className={`mt-12 sm:mt-16 bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl sm:rounded-2xl shadow-xl overflow-hidden mx-2 sm:mx-0 transition-all duration-1000 delay-700 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}>
           <div className="p-6 sm:p-10 md:p-12">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
               <div className="lg:w-2/3 text-center lg:text-right">

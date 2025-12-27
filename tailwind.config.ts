@@ -23,7 +23,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        arabic: ['Cairo', 'system-ui', 'sans-serif'],
+        arabic: ['Lalezar', 'system-ui', 'sans-serif'],
+        sans: ['Lalezar', 'system-ui', 'sans-serif'],
       },
     },
   },

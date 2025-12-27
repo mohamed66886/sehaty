@@ -4,13 +4,27 @@ import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { collection, getDocs, addDoc, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { db, storage } from '@/lib/firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Student, Homework } from '@/types';
+
+interface ClassItem {
+  id: string;
+  name: string;
+  subject: string;
+  schedule: string;
+  duration: string;
+  price: string;
+  studentsCount: number;
+  maxStudents: number;
+  isActive: boolean;
+  teacherId: string;
+  createdAt: Date;
+}
 import { 
   Button,
   Card, 
   Space, 
-  DatePicker,
   Row, 
   Col,
   Typography,
@@ -19,9 +33,11 @@ import {
   Input,
   Progress,
   Badge,
-  Checkbox,
   Modal,
-  Form
+  Form,
+  Select,
+  Upload,
+  Tag
 } from 'antd';
 import { 
   FileTextOutlined,
@@ -29,11 +45,16 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  UserOutlined,
-  TeamOutlined
+  TeamOutlined,
+  UploadOutlined,
+  FileImageOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  VideoCameraOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
+import type { UploadFile } from 'antd/es/upload/interface';
 import arEG from 'antd/locale/ar_EG';
-import dayjs from 'dayjs';
 import Link from 'next/link';
 
 const { Title, Text } = Typography;
@@ -42,9 +63,12 @@ const { TextArea } = Input;
 export default function HomeworkPage() {
   const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [homework, setHomework] = useState<Homework[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [filterClass, setFilterClass] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const loadData = useCallback(async () => {
     if (!user?.uid) return;
@@ -63,6 +87,19 @@ export default function HomeworkPage() {
         .filter(student => student.teacherIds?.includes(user.uid));
       
       setStudents(studentsData);
+
+      // Load classes
+      const classesRef = collection(db, 'classes');
+      const classesQuery = query(classesRef, where('teacherId', '==', user.uid));
+      const classesSnapshot = await getDocs(classesQuery);
+      
+      const classesData = classesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+      })) as ClassItem[];
+      
+      setClasses(classesData);
 
       // Load homework
       const homeworkRef = collection(db, 'homework');
@@ -96,6 +133,26 @@ export default function HomeworkPage() {
     const pending = totalStudents - submitted;
     return { totalStudents, submitted, pending };
   };
+
+  // Get unique classes
+  const uniqueClassNames = Array.from(new Set(homework.map(hw => hw.class).filter(Boolean)));
+
+  // Filter homework
+  const filteredHomework = homework.filter(hw => {
+    const classMatch = filterClass === 'all' || hw.class === filterClass;
+    let statusMatch = true;
+    
+    if (filterStatus === 'active') {
+      statusMatch = new Date(hw.deadline) > new Date();
+    } else if (filterStatus === 'completed') {
+      const stats = getHomeworkStats(hw);
+      statusMatch = stats.submitted === stats.totalStudents;
+    } else if (filterStatus === 'overdue') {
+      statusMatch = new Date(hw.deadline) < new Date();
+    }
+    
+    return classMatch && statusMatch;
+  });
 
   return (
     <ConfigProvider locale={arEG} direction="rtl">
@@ -156,7 +213,7 @@ export default function HomeworkPage() {
 
           {/* Stats */}
           <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card>
                 <Space>
                   <div style={{ 
@@ -174,7 +231,7 @@ export default function HomeworkPage() {
                 </Space>
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card>
                 <Space>
                   <div style={{ 
@@ -197,7 +254,7 @@ export default function HomeworkPage() {
                 </Space>
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card>
                 <Space>
                   <div style={{ 
@@ -209,7 +266,7 @@ export default function HomeworkPage() {
                     <ClockCircleOutlined style={{ fontSize: '24px' }} />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '13px' }}>واجبات معلقة</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>واجبات نشطة</Text>
                     <Title level={3} style={{ margin: 0 }}>
                       {homework.filter(hw => new Date(hw.deadline) > new Date()).length}
                     </Title>
@@ -217,32 +274,101 @@ export default function HomeworkPage() {
                 </Space>
               </Card>
             </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card>
+                <Space>
+                  <div style={{ 
+                    padding: '12px', 
+                    background: '#fee2e2', 
+                    color: '#dc2626', 
+                    borderRadius: '8px' 
+                  }}>
+                    <CalendarOutlined style={{ fontSize: '24px' }} />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>واجبات منتهية</Text>
+                    <Title level={3} style={{ margin: 0 }}>
+                      {homework.filter(hw => new Date(hw.deadline) < new Date()).length}
+                    </Title>
+                  </div>
+                </Space>
+              </Card>
+            </Col>
           </Row>
 
+          {/* Filters */}
+          {homework.length > 0 && (
+            <Card styles={{ body: { padding: '16px' } }}>
+              <Row gutter={[16, 16]} align="middle">
+                <Col xs={24} sm={12} md={6}>
+                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                    الصف:
+                  </Text>
+                  <Select
+                    value={filterClass}
+                    onChange={setFilterClass}
+                    style={{ width: '100%' }}
+                    size="large"
+                    options={[
+                      { label: 'جميع الصفوف', value: 'all' },
+                      ...uniqueClassNames.map(c => ({ label: c, value: c }))
+                    ]}
+                  />
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                    الحالة:
+                  </Text>
+                  <Select
+                    value={filterStatus}
+                    onChange={setFilterStatus}
+                    style={{ width: '100%' }}
+                    size="large"
+                    options={[
+                      { label: 'الكل', value: 'all' },
+                      { label: 'نشط', value: 'active' },
+                      { label: 'مكتمل', value: 'completed' },
+                      { label: 'منتهي', value: 'overdue' }
+                    ]}
+                  />
+                </Col>
+                <Col xs={24} sm={24} md={12}>
+                  <Text type="secondary" style={{ fontSize: '14px' }}>
+                    عرض {filteredHomework.length} من {homework.length} واجب
+                  </Text>
+                </Col>
+              </Row>
+            </Card>
+          )}
+
           {/* Homework List */}
-          {homework.length === 0 ? (
+          {filteredHomework.length === 0 ? (
             <Card>
               <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center', padding: '40px 0' }}>
                 <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-                <Text type="secondary">لا توجد واجبات منزلية</Text>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<PlusOutlined />}
-                  onClick={() => setShowForm(true)}
-                  style={{ 
-                    background: 'rgb(30, 103, 141)',
-                    borderColor: 'rgb(30, 103, 141)',
-                    height: '44px'
-                  }}
-                >
-                  إضافة أول واجب
-                </Button>
+                <Text type="secondary">
+                  {homework.length === 0 ? 'لا توجد واجبات منزلية' : 'لا توجد نتائج تطابق البحث'}
+                </Text>
+                {homework.length === 0 && (
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<PlusOutlined />}
+                    onClick={() => setShowForm(true)}
+                    style={{ 
+                      background: 'rgb(30, 103, 141)',
+                      borderColor: 'rgb(30, 103, 141)',
+                      height: '44px'
+                    }}
+                  >
+                    إضافة أول واجب
+                  </Button>
+                )}
               </Space>
             </Card>
           ) : (
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              {homework.map((hw) => {
+              {filteredHomework.map((hw) => {
                 const stats = getHomeworkStats(hw);
                 const isOverdue = new Date(hw.deadline) < new Date();
                 const progressPercent = stats.totalStudents > 0 
@@ -283,15 +409,31 @@ export default function HomeworkPage() {
                           <Space size="small">
                             <CalendarOutlined style={{ color: '#6b7280' }} />
                             <Text type="secondary" style={{ fontSize: '13px' }}>
-                              {new Date(hw.deadline).toLocaleDateString('ar-EG')}
+                              البدء: {new Date(hw.startDate || hw.createdAt).toLocaleDateString('ar-EG')}
                             </Text>
                           </Space>
                         </Col>
                         <Col xs={24} sm={12}>
                           <Space size="small">
+                            <CalendarOutlined style={{ color: '#dc2626' }} />
+                            <Text type="secondary" style={{ fontSize: '13px' }}>
+                              الانتهاء: {new Date(hw.deadline).toLocaleDateString('ar-EG')}
+                            </Text>
+                          </Space>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Space size="small">
                             <TeamOutlined style={{ color: '#6b7280' }} />
                             <Text type="secondary" style={{ fontSize: '13px' }}>
-                              {stats.totalStudents} طالب
+                              {hw.class || 'جميع الصفوف'}
+                            </Text>
+                          </Space>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Space size="small">
+                            <FileTextOutlined style={{ color: '#6b7280' }} />
+                            <Text type="secondary" style={{ fontSize: '13px' }}>
+                              {hw.subject}
                             </Text>
                           </Space>
                         </Col>
@@ -312,6 +454,40 @@ export default function HomeworkPage() {
                           </Space>
                         </Col>
                       </Row>
+
+                      {/* Attachments */}
+                      {hw.attachments && hw.attachments.length > 0 && (
+                        <div>
+                          <Text type="secondary" style={{ fontSize: '13px', marginBottom: '8px', display: 'block' }}>
+                            المرفقات:
+                          </Text>
+                          <Space wrap size="small">
+                            {hw.attachments.map((file: any, idx: number) => {
+                              let icon = <FileTextOutlined />;
+                              let color = '#1890ff';
+                              
+                              if (file.type?.startsWith('image/')) {
+                                icon = <FileImageOutlined />;
+                                color = '#52c41a';
+                              } else if (file.type?.startsWith('video/')) {
+                                icon = <VideoCameraOutlined />;
+                                color = '#1890ff';
+                              } else if (file.type?.includes('pdf')) {
+                                icon = <FilePdfOutlined />;
+                                color = '#f5222d';
+                              }
+                              
+                              return (
+                                <Tag key={idx} icon={icon} color={color}>
+                                  <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                                    {file.name}
+                                  </a>
+                                </Tag>
+                              );
+                            })}
+                          </Space>
+                        </div>
+                      )}
 
                       {/* Progress Bar */}
                       <div>
@@ -372,11 +548,13 @@ export default function HomeworkPage() {
           open={showForm}
           onCancel={() => setShowForm(false)}
           footer={null}
-          width={700}
+          width={800}
           style={{ top: 20 }}
+          styles={{ body: { maxHeight: '80vh', overflowY: 'auto' } }}
         >
           <HomeworkForm
             students={students}
+            classes={classes}
             teacherId={user?.uid || ''}
             onClose={() => setShowForm(false)}
             onSuccess={() => {
@@ -392,32 +570,73 @@ export default function HomeworkPage() {
 
 interface HomeworkFormProps {
   students: Student[];
+  classes: ClassItem[];
   teacherId: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormProps) {
+function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: HomeworkFormProps) {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+
+  // Get selected class details
+  const selectedClass = classes.find(c => c.id === selectedClassId);
+
+  // Filter students by selected class name
+  const filteredStudents = selectedClass 
+    ? students.filter(s => s.class === selectedClass.name)
+    : [];
+
+  const getFileIcon = (file: UploadFile) => {
+    const type = file.type || '';
+    if (type.startsWith('image/')) return <FileImageOutlined style={{ color: '#52c41a' }} />;
+    if (type.startsWith('video/')) return <VideoCameraOutlined style={{ color: '#1890ff' }} />;
+    if (type.includes('pdf')) return <FilePdfOutlined style={{ color: '#f5222d' }} />;
+    if (type.includes('word')) return <FileWordOutlined style={{ color: '#1890ff' }} />;
+    return <FileTextOutlined />;
+  };
 
   const handleSubmit = async (values: any) => {
     setSaving(true);
 
     try {
+      // Upload files to Firebase Storage
+      const uploadedFiles = [];
+      for (const file of fileList) {
+        if (file.originFileObj) {
+          const storageRef = ref(storage, `homework/${Date.now()}_${file.name}`);
+          await uploadBytes(storageRef, file.originFileObj);
+          const url = await getDownloadURL(storageRef);
+          uploadedFiles.push({
+            name: file.name,
+            url,
+            type: file.type,
+            size: file.size
+          });
+        }
+      }
       const homeworkRef = collection(db, 'homework');
       await addDoc(homeworkRef, {
         teacherId,
         title: values.title,
         description: values.description,
-        subject: values.subject,
+        subject: selectedClass?.subject || '',
+        class: selectedClass?.name || '',
+        startDate: Timestamp.fromDate(new Date(values.startDate)),
         deadline: Timestamp.fromDate(new Date(values.deadline)),
         studentIds: values.studentIds,
+        attachments: uploadedFiles,
         submissions: [],
         createdAt: Timestamp.now(),
       });
 
       message.success('تم إضافة الواجب بنجاح');
+      form.resetFields();
+      setFileList([]);
+      setSelectedClassId('');
       onSuccess();
     } catch (error) {
       console.error('Error adding homework:', error);
@@ -428,7 +647,13 @@ function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormP
   };
 
   const selectAll = () => {
-    form.setFieldsValue({ studentIds: students.map(s => s.uid) });
+    form.setFieldsValue({ studentIds: filteredStudents.map(s => s.uid) });
+  };
+
+  const handleClassChange = (value: string) => {
+    setSelectedClassId(value);
+    // Reset student selection when class changes
+    form.setFieldsValue({ studentIds: [] });
   };
 
   return (
@@ -466,22 +691,71 @@ function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormP
       <Row gutter={16}>
         <Col xs={24} sm={12}>
           <Form.Item
+            label="الصف"
+            name="classId"
+            rules={[{ required: true, message: 'الرجاء اختيار الصف' }]}
+          >
+            <Select
+              size="large"
+              placeholder="اختر الصف"
+              onChange={handleClassChange}
+              options={classes.map(c => ({ 
+                label: `${c.name} - ${c.subject}`, 
+                value: c.id 
+              }))}
+            />
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item
             label="المادة"
-            name="subject"
-            rules={[{ required: true, message: 'الرجاء إدخال المادة' }]}
           >
             <Input
               size="large"
-              placeholder="مثال: الرياضيات"
+              value={selectedClass?.subject || ''}
+              disabled
+              placeholder="سيتم اختيارها تلقائياً"
+              style={{ 
+                height: '44px',
+                backgroundColor: '#f5f5f5',
+                color: '#666'
+              }}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col xs={24} sm={12}>
+          <Form.Item
+            label="تاريخ البدء"
+            name="startDate"
+            rules={[{ required: true, message: 'الرجاء اختيار تاريخ البدء' }]}
+          >
+            <Input
+              type="date"
+              size="large"
+              min={new Date().toISOString().split('T')[0]}
               style={{ height: '44px' }}
             />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
           <Form.Item
-            label="الموعد النهائي"
+            label="تاريخ الانتهاء"
             name="deadline"
-            rules={[{ required: true, message: 'الرجاء اختيار الموعد النهائي' }]}
+            rules={[
+              { required: true, message: 'الرجاء اختيار تاريخ الانتهاء' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const startDate = getFieldValue('startDate');
+                  if (!value || !startDate || new Date(value) >= new Date(startDate)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء'));
+                },
+              }),
+            ]}
           >
             <Input
               type="date"
@@ -494,33 +768,69 @@ function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormP
       </Row>
 
       <Form.Item
+        label="إرفاق ملفات (صور، فيديوهات، مستندات)"
+      >
+        <Upload
+          fileList={fileList}
+          onChange={({ fileList }) => setFileList(fileList)}
+          beforeUpload={() => false}
+          multiple
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+          listType="text"
+          iconRender={getFileIcon}
+        >
+          <Button 
+            icon={<UploadOutlined />} 
+            size="large"
+            block
+            style={{ height: '44px' }}
+          >
+            اختر الملفات
+          </Button>
+        </Upload>
+        {fileList.length > 0 && (
+          <div style={{ marginTop: '12px' }}>
+            <Space wrap>
+              {fileList.map(file => (
+                <Tag 
+                  key={file.uid}
+                  closable
+                  onClose={() => setFileList(fileList.filter(f => f.uid !== file.uid))}
+                  icon={getFileIcon(file)}
+                  style={{ padding: '4px 8px' }}
+                >
+                  {file.name}
+                </Tag>
+              ))}
+            </Space>
+          </div>
+        )}
+      </Form.Item>
+
+      <Form.Item
         label={
           <Row justify="space-between" style={{ width: '100%' }}>
-            <Text>الطلاب</Text>
-            <Button type="link" size="small" onClick={selectAll}>
-              تحديد الكل
+            <Text>الطلاب {selectedClass && `(${selectedClass.name})`}</Text>
+            <Button type="link" size="small" onClick={selectAll} disabled={!selectedClassId}>
+              تحديد الكل ({filteredStudents.length})
             </Button>
           </Row>
         }
         name="studentIds"
         rules={[{ required: true, message: 'الرجاء اختيار الطلاب' }]}
       >
-        <Checkbox.Group style={{ width: '100%' }}>
-          <Space direction="vertical" style={{ 
-            width: '100%', 
-            maxHeight: '200px', 
-            overflowY: 'auto',
-            border: '1px solid #d9d9d9',
-            borderRadius: '8px',
-            padding: '12px'
-          }}>
-            {students.map(student => (
-              <Checkbox key={student.uid} value={student.uid} style={{ marginLeft: 0 }}>
-                {student.name} - {student.class}
-              </Checkbox>
-            ))}
-          </Space>
-        </Checkbox.Group>
+        <Select
+          mode="multiple"
+          size="large"
+          placeholder={selectedClassId ? "اختر الطلاب" : "اختر الصف أولاً"}
+          disabled={!selectedClassId}
+          options={filteredStudents.map(s => ({
+            label: s.name,
+            value: s.uid
+          }))}
+          style={{ width: '100%' }}
+          maxTagCount="responsive"
+        />
       </Form.Item>
 
       <Form.Item style={{ marginBottom: 0 }}>
@@ -535,7 +845,9 @@ function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormP
               style={{ 
                 background: 'rgb(30, 103, 141)',
                 borderColor: 'rgb(30, 103, 141)',
-                height: '44px'
+                height: '48px',
+                fontSize: '16px',
+                fontWeight: '600'
               }}
             >
               {saving ? 'جاري الحفظ...' : 'حفظ الواجب'}
@@ -546,7 +858,7 @@ function HomeworkForm({ students, teacherId, onClose, onSuccess }: HomeworkFormP
               size="large"
               onClick={onClose}
               block
-              style={{ height: '44px' }}
+              style={{ height: '48px', fontSize: '16px' }}
             >
               إلغاء
             </Button>

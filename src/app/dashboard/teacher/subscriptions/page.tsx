@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, query, where, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, Timestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { PendingSubscription } from '@/types';
 import { Check, X, Clock, User, Mail, Phone, BookOpen, Calendar } from 'lucide-react';
@@ -47,11 +47,49 @@ export default function SubscriptionsPage() {
 
   const handleApprove = async (subscriptionId: string) => {
     try {
+      // الحصول على بيانات الاشتراك
+      const subscription = subscriptions.find(sub => sub.id === subscriptionId);
+      if (!subscription) {
+        alert('لم يتم العثور على بيانات الاشتراك');
+        return;
+      }
+
+      // تحديث حالة الاشتراك
       const subRef = doc(db, 'pendingSubscriptions', subscriptionId);
       await updateDoc(subRef, {
         status: 'approved',
         updatedAt: Timestamp.now(),
+        reviewedAt: Timestamp.now(),
+        reviewedBy: user?.uid,
       });
+
+      // إضافة الطالب في جدول users إذا لم يكن موجوداً
+      const userRef = doc(db, 'users', subscription.studentUid);
+      const userDoc = await getDocs(query(collection(db, 'users'), where('__name__', '==', subscription.studentUid)));
+      
+      if (userDoc.empty) {
+        // إنشاء سجل جديد للطالب في جدول users
+        await setDoc(userRef, {
+          name: subscription.studentName,
+          email: subscription.studentEmail,
+          phone: subscription.studentPhone,
+          role: 'student',
+          class: subscription.className,
+          teacherIds: [user?.uid],
+          centerId: '', // يمكن تحديثه لاحقاً
+          parentId: '', // يجب تحديثه لاحقاً
+          createdAt: Timestamp.now(),
+        });
+      } else {
+        // تحديث teacherIds للطالب الموجود
+        const existingData = userDoc.docs[0].data();
+        const teacherIds = existingData.teacherIds || [];
+        if (!teacherIds.includes(user?.uid)) {
+          await updateDoc(userRef, {
+            teacherIds: [...teacherIds, user?.uid],
+          });
+        }
+      }
       
       // تحديث القائمة المحلية
       setSubscriptions(prev => prev.map(sub => 
@@ -59,6 +97,8 @@ export default function SubscriptionsPage() {
           ? { ...sub, status: 'approved' as const, updatedAt: new Date() }
           : sub
       ));
+
+      alert('تمت الموافقة على الاشتراك بنجاح');
     } catch (error) {
       console.error('Error approving subscription:', error);
       alert('حدث خطأ أثناء الموافقة على الطلب');
@@ -192,7 +232,7 @@ export default function SubscriptionsPage() {
           </div>
         </div>
 
-        {/* Subscriptions List */}
+        {/* Subscriptions Table */}
         {filteredSubscriptions.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-12 text-center">
             <Clock className="mx-auto text-gray-400 mb-4" size={48} />
@@ -200,91 +240,133 @@ export default function SubscriptionsPage() {
             <p className="text-gray-600">لم يتم العثور على طلبات اشتراك بهذا التصنيف</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filteredSubscriptions.map((subscription) => (
-              <div
-                key={subscription.id}
-                className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow"
-              >
-                {/* Student Info */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-lg">
-                      {subscription.studentName.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-lg">{subscription.studentName}</h3>
-                      <p className="text-sm text-gray-500">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      الطالب
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      البريد الإلكتروني
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      رقم الهاتف
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      الصف
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      التحقق
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      تاريخ الطلب
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      الحالة
+                    </th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      الإجراءات
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredSubscriptions.map((subscription) => (
+                    <tr key={subscription.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                            {subscription.studentName.charAt(0)}
+                          </div>
+                          <div className="font-semibold text-gray-900">
+                            {subscription.studentName}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Mail size={16} className="text-gray-400" />
+                          <span>{subscription.studentEmail}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Phone size={16} className="text-gray-400" />
+                          <span>{subscription.studentPhone}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm">
+                          <BookOpen size={16} className="text-gray-400" />
+                          <span className="font-semibold text-gray-900">{subscription.className}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {subscription.emailVerified ? (
+                          <span className="inline-flex items-center gap-1 text-sm text-green-600 font-semibold">
+                            <Check size={16} />
+                            محقق
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-sm text-red-600 font-semibold">
+                            <X size={16} />
+                            غير محقق
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {new Date(subscription.createdAt).toLocaleDateString('ar-EG', {
                           year: 'numeric',
-                          month: 'long',
+                          month: 'short',
                           day: 'numeric',
                         })}
-                      </p>
-                    </div>
-                    {subscription.status === 'pending' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                        <Clock size={14} className="ml-1" />
-                        قيد المراجعة
-                      </span>
-                    )}
-                    {subscription.status === 'approved' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                        <Check size={14} className="ml-1" />
-                        موافق عليه
-                      </span>
-                    )}
-                    {subscription.status === 'rejected' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                        <X size={14} className="ml-1" />
-                        مرفوض
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <Mail size={16} className="text-gray-400" />
-                      <span>{subscription.studentEmail}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <Phone size={16} className="text-gray-400" />
-                      <span>{subscription.studentPhone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <BookOpen size={16} className="text-gray-400" />
-                      <span className="font-semibold">{subscription.className}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar size={16} className="text-gray-400" />
-                      <span className={subscription.emailVerified ? 'text-green-600 font-semibold' : 'text-red-600'}>
-                        {subscription.emailVerified ? '✓ تم التحقق من البريد الإلكتروني' : '✗ لم يتم التحقق من البريد'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                {subscription.status === 'pending' && (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleApprove(subscription.id!)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors"
-                    >
-                      <Check size={18} />
-                      <span>موافقة</span>
-                    </button>
-                    <button
-                      onClick={() => handleReject(subscription.id!)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors"
-                    >
-                      <X size={18} />
-                      <span>رفض</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {subscription.status === 'pending' && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                            <Clock size={14} className="ml-1" />
+                            قيد المراجعة
+                          </span>
+                        )}
+                        {subscription.status === 'approved' && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            <Check size={14} className="ml-1" />
+                            موافق عليه
+                          </span>
+                        )}
+                        {subscription.status === 'rejected' && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                            <X size={14} className="ml-1" />
+                            مرفوض
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {subscription.status === 'pending' && (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleApprove(subscription.id!)}
+                              className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                              title="موافقة"
+                            >
+                              <Check size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleReject(subscription.id!)}
+                              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                              title="رفض"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

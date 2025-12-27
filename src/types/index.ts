@@ -69,9 +69,17 @@ export interface Homework {
   title: string;
   description: string;
   deadline: Date;
+  startDate?: Date;
   subject: string;
+  class?: string;
   createdAt: Date;
   submissions?: HomeworkSubmission[];
+  attachments?: {
+    name: string;
+    url: string;
+    type?: string;
+    size?: number;
+  }[];
 }
 
 export interface HomeworkSubmission {

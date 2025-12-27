@@ -400,7 +400,7 @@ export default function TeacherSettingsPage() {
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <User className="text-blue-600" size={20} />
+                  <UserOutlined className="text-blue-600" style={{ fontSize: 20 }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">الملف الشخصي</h3>
@@ -416,13 +416,13 @@ export default function TeacherSettingsPage() {
                     {profileData.avatar}
                   </div>
                   <button className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors group-hover:scale-105">
-                    <Camera size={20} className="text-gray-700" />
+                    <CameraOutlined className="text-gray-700" style={{ fontSize: 20 }} />
                   </button>
                 </div>
                 <div className="flex-1 space-y-4">
                   <div>
                     <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-md">
-                      <Camera size={16} />
+                      <CameraOutlined style={{ fontSize: 16 }} />
                       <span>تغيير الصورة</span>
                     </button>
                     <p className="text-sm text-gray-600 mt-2">الحد الأقصى: 2 ميجابايت • PNG, JPG, GIF</p>
@@ -502,7 +502,7 @@ export default function TeacherSettingsPage() {
                     </>
                   ) : (
                     <>
-                      <Save size={18} />
+                      <SaveOutlined style={{ fontSize: 18 }} />
                       <span>حفظ التغييرات</span>
                     </>
                   )}
@@ -518,7 +518,7 @@ export default function TeacherSettingsPage() {
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Bell className="text-blue-600" size={20} />
+                  <BellOutlined className="text-blue-600" style={{ fontSize: 20 }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">الإشعارات</h3>
@@ -535,7 +535,7 @@ export default function TeacherSettingsPage() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
-                          <Mail size={20} className="text-blue-600" />
+                          <MailOutlined style={{ fontSize: 20 }} className="text-blue-600" />
                         </div>
                         <div>
                           <h5 className="font-medium text-gray-900">البريد الإلكتروني</h5>
@@ -558,7 +558,7 @@ export default function TeacherSettingsPage() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-green-100 rounded-lg">
-                          <Smartphone size={20} className="text-green-600" />
+                          <PhoneOutlined style={{ fontSize: 20 }} className="text-green-600" />
                         </div>
                         <div>
                           <h5 className="font-medium text-gray-900">الإشعارات الفورية</h5>
@@ -581,7 +581,7 @@ export default function TeacherSettingsPage() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-purple-100 rounded-lg">
-                          <MessageSquare size={20} className="text-purple-600" />
+                          <MessageOutlined style={{ fontSize: 20 }} className="text-purple-600" />
                         </div>
                         <div>
                           <h5 className="font-medium text-gray-900">رسائل SMS</h5>
@@ -695,7 +695,7 @@ export default function TeacherSettingsPage() {
                     </>
                   ) : (
                     <>
-                      <Save size={18} />
+                      <SaveOutlined style={{ fontSize: 18 }} />
                       <span>حفظ الإعدادات</span>
                     </>
                   )}
@@ -714,7 +714,7 @@ export default function TeacherSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg shadow-sm">
-                      <Users className="text-blue-600" size={20} />
+                      <TeamOutlined className="text-blue-600" style={{ fontSize: 20 }} />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">أكواد الصفوف الدراسية</h3>
@@ -725,7 +725,7 @@ export default function TeacherSettingsPage() {
                     onClick={handleExportCodes}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm"
                   >
-                    <Download size={16} />
+                    <DownloadOutlined style={{ fontSize: 16 }} />
                     <span>تصدير الكل</span>
                   </button>
                 </div>
@@ -733,7 +733,7 @@ export default function TeacherSettingsPage() {
               <div className="p-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                    <SafetyOutlined className="text-blue-600 flex-shrink-0 mt-0.5" style={{ fontSize: 20 }} />
                     <div>
                       <p className="text-sm text-blue-800 font-medium">
                         كل صف دراسي له كود سري خاص به يستخدمه الطلاب للدخول إلى المحتوى
@@ -755,7 +755,7 @@ export default function TeacherSettingsPage() {
                         </div>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
-                            <Users size={14} />
+                            <TeamOutlined style={{ fontSize: 14 }} />
                             {cls.studentsCount} طالب
                           </span>
                           <span>آخر تحديث: {cls.lastModified}</span>
@@ -783,7 +783,7 @@ export default function TeacherSettingsPage() {
                                 className="absolute left-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800"
                                 title="توليد كود عشوائي"
                               >
-                                <RefreshCw size={16} />
+                                <ReloadOutlined style={{ fontSize: 16 }} />
                               </button>
                             </div>
                             <button
@@ -816,14 +816,14 @@ export default function TeacherSettingsPage() {
                                 className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                                 title={showCodes[cls.id] ? 'إخفاء الكود' : 'إظهار الكود'}
                               >
-                                {showCodes[cls.id] ? <EyeOff size={18} /> : <Eye size={18} />}
+                                {showCodes[cls.id] ? <EyeInvisibleOutlined style={{ fontSize: 18 }} /> : <EyeOutlined style={{ fontSize: 18 }} />}
                               </button>
                               <button
                                 onClick={() => handleCopyToClipboard(cls.code)}
                                 className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
                                 title="نسخ الكود"
                               >
-                                <Key size={18} />
+                                <KeyOutlined style={{ fontSize: 18 }} />
                               </button>
                               <button
                                 onClick={() => {
@@ -833,7 +833,7 @@ export default function TeacherSettingsPage() {
                                 className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
                                 title="تعديل الكود"
                               >
-                                <Save size={18} />
+                                <SaveOutlined style={{ fontSize: 18 }} />
                               </button>
                             </div>
                           </>
@@ -850,7 +850,7 @@ export default function TeacherSettingsPage() {
               <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <Lock className="text-blue-600" size={20} />
+                    <LockOutlined className="text-blue-600" style={{ fontSize: 20 }} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">الأمان</h3>
@@ -864,7 +864,7 @@ export default function TeacherSettingsPage() {
                   <div className="flex items-center justify-between">
                     <h4 className="text-lg font-bold text-gray-900">الكود السري الشخصي</h4>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Shield size={16} />
+                      <SafetyOutlined style={{ fontSize: 16 }} />
                       <span>للعمليات المهمة</span>
                     </div>
                   </div>
@@ -885,7 +885,7 @@ export default function TeacherSettingsPage() {
                           onClick={() => setShowSecretCode(!showSecretCode)}
                           className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
                         >
-                          {showSecretCode ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showSecretCode ? <EyeInvisibleOutlined style={{ fontSize: 18 }} /> : <EyeOutlined style={{ fontSize: 18 }} />}
                         </button>
                       </div>
                     </div>
@@ -950,7 +950,7 @@ export default function TeacherSettingsPage() {
                           onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                           className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
                         >
-                          {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showCurrentPassword ? <EyeInvisibleOutlined style={{ fontSize: 18 }} /> : <EyeOutlined style={{ fontSize: 18 }} />}
                         </button>
                       </div>
                     </div>
@@ -971,7 +971,7 @@ export default function TeacherSettingsPage() {
                             onClick={() => setShowNewPassword(!showNewPassword)}
                             className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
                           >
-                            {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showNewPassword ? <EyeInvisibleOutlined style={{ fontSize: 18 }} /> : <EyeOutlined style={{ fontSize: 18 }} />}
                           </button>
                         </div>
                       </div>
@@ -991,7 +991,7 @@ export default function TeacherSettingsPage() {
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
                           >
-                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showConfirmPassword ? <EyeInvisibleOutlined style={{ fontSize: 18 }} /> : <EyeOutlined style={{ fontSize: 18 }} />}
                           </button>
                         </div>
                       </div>
@@ -1019,7 +1019,7 @@ export default function TeacherSettingsPage() {
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Palette className="text-blue-600" size={20} />
+                  <SettingOutlined className="text-blue-600" style={{ fontSize: 20 }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">التفضيلات</h3>
@@ -1040,7 +1040,7 @@ export default function TeacherSettingsPage() {
                     >
                       <div className="flex items-center justify-center mb-2 sm:mb-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-yellow-300 to-yellow-400 flex items-center justify-center">
-                          <Sun size={isMobile ? 20 : 24} className="text-white" />
+                          <SunOutlined style={{ fontSize: isMobile ? 20 : 24 }} className="text-white" />
                         </div>
                       </div>
                       <h5 className="font-medium text-gray-900 text-center text-sm sm:text-base">فاتح</h5>
@@ -1054,7 +1054,7 @@ export default function TeacherSettingsPage() {
                     >
                       <div className="flex items-center justify-center mb-2 sm:mb-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                          <Moon size={isMobile ? 20 : 24} className="text-white" />
+                          <MoonOutlined style={{ fontSize: isMobile ? 20 : 24 }} className="text-white" />
                         </div>
                       </div>
                       <h5 className="font-medium text-gray-900 text-center text-sm sm:text-base">داكن</h5>
@@ -1068,7 +1068,7 @@ export default function TeacherSettingsPage() {
                     >
                       <div className="flex items-center justify-center mb-2 sm:mb-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                          <Settings size={isMobile ? 20 : 24} className="text-white" />
+                          <SettingOutlined style={{ fontSize: isMobile ? 20 : 24 }} className="text-white" />
                         </div>
                       </div>
                       <h5 className="font-medium text-gray-900 text-center text-sm sm:text-base">تلقائي</h5>
@@ -1087,7 +1087,7 @@ export default function TeacherSettingsPage() {
                         اللغة
                       </label>
                       <div className="relative">
-                        <Globe className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <GlobalOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 20 }} />
                         <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
                           <option>العربية</option>
                           <option>English</option>
@@ -1101,7 +1101,7 @@ export default function TeacherSettingsPage() {
                         المنطقة الزمنية
                       </label>
                       <div className="relative">
-                        <Globe className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <GlobalOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 20 }} />
                         <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
                           <option>القاهرة (GMT+2)</option>
                           <option>الرياض (GMT+3)</option>
@@ -1182,9 +1182,9 @@ export default function TeacherSettingsPage() {
                 : 'bg-red-50 border-red-500 text-red-800'
             }`}>
               {message.type === 'success' ? (
-                <CheckCircle className="flex-shrink-0" size={24} />
+                <CheckCircleOutlined className="flex-shrink-0" style={{ fontSize: 24 }} />
               ) : (
-                <XCircle className="flex-shrink-0" size={24} />
+                <CloseCircleOutlined className="flex-shrink-0" style={{ fontSize: 24 }} />
               )}
               <p className="font-medium flex-1">{message.text}</p>
               <button 
@@ -1207,7 +1207,7 @@ export default function TeacherSettingsPage() {
                 onClick={() => signOut()}
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl transition-colors text-sm sm:text-base w-full sm:w-auto"
               >
-                <LogOut size={18} />
+                <LogoutOutlined style={{ fontSize: 18 }} />
                 <span>تسجيل الخروج</span>
               </button>
             </div>
@@ -1224,7 +1224,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('profile')}
                     className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <User size={20} />
+                    <UserOutlined style={{ fontSize: 20 }} />
                     <span className="text-xs font-medium">الملف</span>
                   </button>
 
@@ -1232,7 +1232,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('notifications')}
                     className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${activeTab === 'notifications' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Bell size={20} />
+                    <BellOutlined style={{ fontSize: 20 }} />
                     <span className="text-xs font-medium">الإشعارات</span>
                   </button>
 
@@ -1240,7 +1240,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('security')}
                     className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all relative ${activeTab === 'security' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Lock size={20} />
+                    <LockOutlined style={{ fontSize: 20 }} />
                     <span className="text-xs font-medium">الأمان</span>
                     <span className="absolute top-1 left-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">مهم</span>
                   </button>
@@ -1249,7 +1249,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('preferences')}
                     className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${activeTab === 'preferences' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Palette size={20} />
+                    <SettingOutlined style={{ fontSize: 20 }} />
                     <span className="text-xs font-medium">التفضيلات</span>
                   </button>
                 </div>
@@ -1259,7 +1259,7 @@ export default function TeacherSettingsPage() {
                 <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                      <Settings className="text-white" size={20} />
+                      <SettingOutlined className="text-white" style={{ fontSize: 20 }} />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white">القائمة</h3>
@@ -1273,7 +1273,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('profile')}
                     className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <User size={20} />
+                    <UserOutlined style={{ fontSize: 20 }} />
                     <span className="font-medium">الملف الشخصي</span>
                   </button>
 
@@ -1281,7 +1281,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('notifications')}
                     className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${activeTab === 'notifications' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Bell size={20} />
+                    <BellOutlined style={{ fontSize: 20 }} />
                     <span className="font-medium">الإشعارات</span>
                   </button>
 
@@ -1289,7 +1289,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('security')}
                     className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${activeTab === 'security' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Lock size={20} />
+                    <LockOutlined style={{ fontSize: 20 }} />
                     <span className="font-medium">الأمان</span>
                     <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-auto">مهم</span>
                   </button>
@@ -1298,7 +1298,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setActiveTab('preferences')}
                     className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${activeTab === 'preferences' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <Palette size={20} />
+                    <SettingOutlined style={{ fontSize: 20 }} />
                     <span className="font-medium">التفضيلات</span>
                   </button>
                 </div>

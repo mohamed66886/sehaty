@@ -14,11 +14,23 @@ export default function TeacherAnnouncementsPage() {
     target: 'جميع الصفوف',
     priority: 'normal'
   });
-  const [editMode, setEditMode] = useState(null);
+  const [editMode, setEditMode] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   // Example announcements data
-  const [announcements, setAnnouncements] = useState([
+  interface Announcement {
+    id: number;
+    title: string;
+    content: string;
+    date: string;
+    target: string;
+    views: number;
+    priority: string;
+    status: string;
+    createdAt: string;
+  }
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>([
     {
       id: 1,
       title: 'تأجيل امتحان الرياضيات',
@@ -81,7 +93,7 @@ export default function TeacherAnnouncementsPage() {
     ? announcements 
     : announcements.filter(a => a.priority === activeFilter);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -90,7 +102,15 @@ export default function TeacherAnnouncementsPage() {
       if (editMode) {
         // Update existing announcement
         setAnnouncements(prev => prev.map(a => 
-          a.id === editMode ? { ...newAnnouncement, id: editMode, views: a.views, date: new Date().toISOString().split('T')[0] } : a
+          a.id === editMode ? { 
+            ...a,
+            ...newAnnouncement, 
+            id: editMode, 
+            views: a.views, 
+            date: new Date().toISOString().split('T')[0],
+            status: a.status,
+            createdAt: a.createdAt
+          } : a
         ));
         setEditMode(null);
       } else {
@@ -117,7 +137,7 @@ export default function TeacherAnnouncementsPage() {
     }, 800);
   };
 
-  const handleEdit = (announcement) => {
+  const handleEdit = (announcement: Announcement) => {
     setNewAnnouncement({
       title: announcement.title,
       content: announcement.content,
@@ -128,7 +148,7 @@ export default function TeacherAnnouncementsPage() {
     setShowNewModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
       setAnnouncements(prev => prev.filter(a => a.id !== id));
     }
@@ -145,8 +165,8 @@ export default function TeacherAnnouncementsPage() {
     });
   };
 
-  const getPriorityInfo = (priority) => {
-    const info = {
+  const getPriorityInfo = (priority: string) => {
+    const info: Record<string, { label: string; color: string; bg: string; text: string; border: string }> = {
       high: { label: 'هام', color: 'red', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
       medium: { label: 'متوسط', color: 'orange', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
       normal: { label: 'عادي', color: 'blue', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' }

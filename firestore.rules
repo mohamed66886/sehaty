@@ -1,0 +1,265 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'super_admin';
+    }
+    
+    function isTeacher() {
+      return isAuthenticated() && getUserRole() == 'teacher';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && getUserRole() == 'student';
+    }
+    
+    function isParent() {
+      return isAuthenticated() && getUserRole() == 'parent';
+    }
+    
+    function isTeacherOfStudent(studentId) {
+      let student = get(/databases/$(database)/documents/students/$(studentId)).data;
+      return request.auth.uid in student.teacherIds;
+    }
+    
+    function isParentOfStudent(studentId) {
+      let student = get(/databases/$(database)/documents/students/$(studentId)).data;
+      return request.auth.uid == student.parentId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data
+      // Super admins can read all users
+      allow read: if isUser(userId) || isSuperAdmin();
+      
+      // Only super admins can create/update/delete users
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Teachers collection
+    match /teachers/{teacherId} {
+      // Teachers can read their own data
+      // Super admins can read all teachers
+      // Students can read their teachers' data
+      allow read: if isUser(teacherId) || isSuperAdmin();
+      
+      // Only super admins can create/update/delete teachers
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Students collection
+    match /students/{studentId} {
+      // Students can read their own data
+      // Teachers can read their students' data
+      // Parents can read their children's data
+      // Super admins can read all students
+      allow read: if isUser(studentId) 
+                  || isSuperAdmin() 
+                  || isTeacherOfStudent(studentId) 
+                  || isParentOfStudent(studentId);
+      
+      // Only super admins can create students
+      allow create: if isSuperAdmin();
+      
+      // Super admins and the student themselves can update
+      allow update: if isSuperAdmin() || isUser(studentId);
+      
+      // Only super admins can delete students
+      allow delete: if isSuperAdmin();
+    }
+
+    // Parents collection
+    match /parents/{parentId} {
+      // Parents can read their own data
+      // Super admins can read all parents
+      allow read: if isUser(parentId) || isSuperAdmin();
+      
+      // Only super admins can create/update/delete parents
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Attendance collection
+    match /attendance/{attendanceId} {
+      // Teachers can create attendance for their students
+      allow create: if isTeacher();
+      
+      // Students can read their own attendance
+      // Teachers can read attendance for their students
+      // Parents can read attendance for their children
+      // Super admins can read all attendance
+      allow read: if isSuperAdmin()
+                  || (isStudent() && resource.data.studentId == request.auth.uid)
+                  || (isTeacher() && isTeacherOfStudent(resource.data.studentId))
+                  || (isParent() && isParentOfStudent(resource.data.studentId));
+      
+      // Teachers can update/delete their own attendance records
+      // Super admins can update/delete any attendance
+      allow update, delete: if isSuperAdmin() 
+                            || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+
+    // Homework collection
+    match /homework/{homeworkId} {
+      // Teachers can create homework
+      allow create: if isTeacher();
+      
+      // Students can read homework assigned to them
+      // Teachers can read their own homework
+      // Parents can read homework assigned to their children
+      // Super admins can read all homework
+      allow read: if isSuperAdmin()
+                  || (isTeacher() && resource.data.teacherId == request.auth.uid)
+                  || (isStudent() && request.auth.uid in resource.data.studentIds)
+                  || (isParent() && exists(/databases/$(database)/documents/students/$(request.auth.uid)));
+      
+      // Teachers can update/delete their own homework
+      // Super admins can update/delete any homework
+      allow update, delete: if isSuperAdmin() 
+                            || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+
+    // Exams collection
+    match /exams/{examId} {
+      // Teachers can create exams
+      allow create: if isTeacher();
+      
+      // Students can read exams assigned to them
+      // Teachers can read their own exams
+      // Super admins can read all exams
+      allow read: if isSuperAdmin()
+                  || (isTeacher() && resource.data.teacherId == request.auth.uid)
+                  || (isStudent() && request.auth.uid in resource.data.studentIds);
+      
+      // Teachers can update/delete their own exams
+      // Super admins can update/delete any exams
+      allow update, delete: if isSuperAdmin() 
+                            || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+
+    // Results collection
+    match /results/{resultId} {
+      // Students can create their own results (submit exam)
+      allow create: if isStudent() && request.resource.data.studentId == request.auth.uid;
+      
+      // Students can read their own results
+      // Teachers can read results for their students
+      // Parents can read results for their children
+      // Super admins can read all results
+      allow read: if isSuperAdmin()
+                  || (isStudent() && resource.data.studentId == request.auth.uid)
+                  || (isTeacher() && isTeacherOfStudent(resource.data.studentId))
+                  || (isParent() && isParentOfStudent(resource.data.studentId));
+      
+      // Teachers can grade results (update)
+      // Super admins can update any results
+      allow update: if isSuperAdmin() 
+                    || (isTeacher() && isTeacherOfStudent(resource.data.studentId));
+      
+      // Only super admins can delete results
+      allow delete: if isSuperAdmin();
+    }
+
+    // Centers collection (if implemented)
+    match /centers/{centerId} {
+      // All authenticated users can read centers
+      allow read: if isAuthenticated();
+      
+      // Only super admins can create/update/delete centers
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Notifications collection (optional)
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // System can create notifications
+      allow create: if isAuthenticated();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Schedules collection
+    match /schedules/{scheduleId} {
+      // Teachers can create their own schedules
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      
+      // Teachers can read their own schedules
+      // Super admins can read all schedules
+      allow read: if isSuperAdmin() 
+                  || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      
+      // Teachers can update/delete their own schedules
+      // Super admins can update/delete any schedules
+      allow update, delete: if isSuperAdmin() 
+                            || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+
+    // Pending Subscriptions collection
+    match /pendingSubscriptions/{subscriptionId} {
+      // Users can read their own subscription
+      // Super admins and teachers can read all subscriptions
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == subscriptionId || 
+         isSuperAdmin() ||
+         isTeacher());
+      
+      // Users can create their own subscription
+      allow create: if isAuthenticated() && 
+        request.auth.uid == subscriptionId &&
+        request.resource.data.studentUid == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.emailVerified == false;
+      
+      // Users can update their own subscription (for email verification)
+      // Teachers and super admins can update status
+      allow update: if isAuthenticated() && 
+        ((request.auth.uid == subscriptionId && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified', 'emailVerifiedAt'])) ||
+         isSuperAdmin() ||
+         (isTeacher() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedAt', 'reviewedBy', 'rejectionReason'])));
+      
+      // Only super admins can delete subscriptions
+      allow delete: if isSuperAdmin();
+    }
+
+    // Classes collection
+    match /classes/{classId} {
+      // Anyone can read classes to view available classes
+      allow read: if true;
+      
+      // Teachers can create their own classes
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      
+      // Teachers can update their own classes
+      // Super admins can update any class
+      allow update: if isSuperAdmin() 
+                    || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      
+      // Teachers can delete their own classes
+      // Super admins can delete any class
+      allow delete: if isSuperAdmin() 
+                    || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+  }
+}

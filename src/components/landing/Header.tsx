@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -21,7 +22,11 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white shadow-md sticky top-4 z-50 mx-8 rounded-2xl border border-gray-200 animate-fadeInDown transition-all duration-300 hover:shadow-xl overflow-hidden">
+    <header className={`shadow-md sticky top-4 z-50 mx-8 rounded-2xl border animate-fadeInDown transition-all duration-300 hover:shadow-xl overflow-hidden ${
+      isDarkMode 
+        ? 'bg-slate-900 border-slate-700 shadow-blue-500/10' 
+        : 'bg-white border-gray-200'
+    }`}>
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Desktop: Logo and Dark Mode Toggle */}
@@ -39,7 +44,7 @@ export default function Header() {
             {/* Professional Ant Design Style Switch */}
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={toggleDarkMode}
                 className={`relative inline-flex h-8 w-16 items-center justify-between px-1.5 rounded-full transition-all duration-300 focus:outline-none ${
                   isDarkMode ? 'bg-slate-700' : 'bg-orange-400'
                 }`}
@@ -74,7 +79,7 @@ export default function Header() {
           {/* Mobile: Dark Mode Toggle (Right) */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={toggleDarkMode}
               className={`relative inline-flex h-7 w-14 items-center justify-between px-1.5 rounded-full transition-all duration-300 focus:outline-none ${
                 isDarkMode ? 'bg-slate-700' : 'bg-orange-400'
               }`}
@@ -123,7 +128,11 @@ export default function Header() {
             {/* Login Button */}
             <Link
               href="/login"
-              className="px-6 py-2 text-primary-600 hover:text-primary-700 font-medium border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+              className={`px-6 py-2 font-medium border rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'text-sky-400 border-sky-500 hover:bg-slate-800' 
+                  : 'text-primary-600 border-primary-600 hover:text-primary-700 hover:bg-primary-50'
+              }`}
             >
               تسجيل الدخول
             </Link>
@@ -131,7 +140,11 @@ export default function Header() {
             {/* Register Button */}
             <Link
               href="/register"
-              className="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              className={`px-6 py-2 text-white font-medium rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-sky-600 hover:bg-sky-700' 
+                  : 'bg-primary-600 hover:bg-primary-700'
+              }`}
             >
               حساب جديد
             </Link>
@@ -140,7 +153,9 @@ export default function Header() {
           {/* Mobile Menu Button (Left) */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-gray-700 focus:outline-none"
+            className={`md:hidden focus:outline-none transition-colors duration-300 ${
+              isDarkMode ? 'text-white' : 'text-gray-700'
+            }`}
           >
             <svg
               className="w-6 h-6"
@@ -166,14 +181,22 @@ export default function Header() {
             <div className="flex flex-col gap-4">
               <Link
                 href="/login"
-                className="px-6 py-2 text-center text-primary-600 hover:text-primary-700 font-medium border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors animate-fade-in-up"
+                className={`px-6 py-2 text-center font-medium border rounded-lg transition-colors animate-fade-in-up ${
+                  isDarkMode 
+                    ? 'text-sky-400 border-sky-500 hover:bg-slate-800' 
+                    : 'text-primary-600 border-primary-600 hover:text-primary-700 hover:bg-primary-50'
+                }`}
                 style={{ animationDelay: '0.1s' }}
               >
                 تسجيل الدخول
               </Link>
               <Link
                 href="/register"
-                className="px-6 py-2 text-center bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors animate-fade-in-up"
+                className={`px-6 py-2 text-center text-white font-medium rounded-lg transition-colors animate-fade-in-up ${
+                  isDarkMode 
+                    ? 'bg-sky-600 hover:bg-sky-700' 
+                    : 'bg-primary-600 hover:bg-primary-700'
+                }`}
                 style={{ animationDelay: '0.2s' }}
               >
                 حساب جديد
@@ -184,9 +207,15 @@ export default function Header() {
       </nav>
 
       {/* Scroll Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-2xl overflow-hidden">
+      <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl overflow-hidden transition-colors duration-300 ${
+        isDarkMode ? 'bg-slate-800' : 'bg-gray-200'
+      }`}>
         <div 
-          className="h-full bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 transition-all duration-150 ease-out"
+          className={`h-full transition-all duration-150 ease-out ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-sky-500 via-sky-600 to-sky-700' 
+              : 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700'
+          }`}
           style={{ width: `${scrollProgress}%` }}
         />
       </div>

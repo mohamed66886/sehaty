@@ -49,6 +49,7 @@ export async function getUser(uid: string): Promise<User | null> {
   if (userSnap.exists()) {
     const data = userSnap.data();
     return {
+      uid, // Always include the uid from the parameter
       ...data,
       createdAt: data.createdAt?.toDate(),
     } as User;

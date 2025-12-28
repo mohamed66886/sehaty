@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import { ChartIcon, BellIcon, LockIcon, MobileIcon, CheckIcon, NoteIcon, TrendingUpIcon, ChatIcon, TargetIcon } from "@/components/icons/Icons";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Features() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const { isDarkMode } = useTheme();
 
   const features = [
     {
@@ -103,9 +105,13 @@ export default function Features() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="features" className="relative py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+    <section ref={sectionRef} id="features" className={`relative py-16 sm:py-20 lg:py-24 overflow-hidden transition-colors duration-300 ${
+      isDarkMode ? 'bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-b from-gray-50 to-white'
+    }`}>
       {/* خلفية زخرفية */}
-      <div className="absolute inset-0 opacity-5">
+      <div className={`absolute inset-0 transition-opacity duration-300 ${
+        isDarkMode ? 'opacity-10' : 'opacity-5'
+      }`}>
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary-400 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
       </div>
@@ -117,7 +123,7 @@ export default function Features() {
         }`}>
           {/* Title */}
           <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
-            <span className="text-gray-900">المميزات . </span>
+            <span className={`transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>المميزات . </span>
             <span className="text-sky-500">المتكاملة</span>
           </h2>
 
@@ -145,7 +151,9 @@ export default function Features() {
             />
           </svg>
             
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mt-4">
+          <p className={`text-lg max-w-2xl mx-auto mt-4 transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+          }`}>
             كل ما تحتاجه لإدارة مركزك التعليمي في منصة واحدة متكاملة
           </p>
         </div>
@@ -159,7 +167,9 @@ export default function Features() {
             <img 
               src="/sec.png" 
               alt="منصة حصتي" 
-              className="w-3/5 mx-auto h-auto object-cover"
+              className={`w-3/5 mx-auto h-auto object-cover transition-all duration-300 ${
+                isDarkMode ? 'brightness-90' : ''
+              }`}
             />
           </div>
 
@@ -177,7 +187,9 @@ export default function Features() {
                   }}
                 >
                   {/* علامة الصح */}
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center">
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode ? 'bg-sky-600' : 'bg-primary-600'
+                  }`}>
                     <svg 
                       className="w-4 h-4 text-white" 
                       fill="none" 
@@ -195,10 +207,14 @@ export default function Features() {
                   
                   {/* المحتوى */}
                   <div className="flex-1">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-0.5">
+                    <h3 className={`text-sm sm:text-base font-bold mb-0.5 transition-colors duration-300 ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {feature.title}
                     </h3>
-                    <p className="text-xs text-gray-600 leading-relaxed">
+                    <p className={`text-xs leading-relaxed transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
                       {feature.description}
                     </p>
                   </div>
@@ -209,7 +225,11 @@ export default function Features() {
         </div>
 
         {/* قسم المعلومات الإضافية */}
-        <div className={`mt-12 sm:mt-16 bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl sm:rounded-2xl shadow-xl overflow-hidden mx-2 sm:mx-0 transition-all duration-1000 delay-700 ${
+        <div className={`mt-12 sm:mt-16 rounded-xl sm:rounded-2xl shadow-xl overflow-hidden mx-2 sm:mx-0 transition-all duration-1000 delay-700 ${
+          isDarkMode 
+            ? 'bg-gradient-to-r from-sky-700 to-sky-800' 
+            : 'bg-gradient-to-r from-primary-600 to-primary-700'
+        } ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
           <div className="p-6 sm:p-10 md:p-12">
@@ -223,7 +243,11 @@ export default function Features() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto lg:w-auto">
-                <button className="px-6 sm:px-7 py-3 bg-white text-primary-700 font-bold rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base">
+                <button className={`px-6 sm:px-7 py-3 font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base ${
+                  isDarkMode 
+                    ? 'bg-white text-sky-700 hover:bg-gray-50' 
+                    : 'bg-white text-primary-700 hover:bg-gray-50'
+                }`}>
                   طلب عرض توضيحي
                 </button>
                 <button className="px-6 sm:px-7 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300 text-sm sm:text-base">

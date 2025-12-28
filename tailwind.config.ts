@@ -26,6 +26,9 @@ const config: Config = {
         arabic: ['Lalezar', 'system-ui', 'sans-serif'],
         sans: ['Lalezar', 'system-ui', 'sans-serif'],
       },
+      animation: {
+        'bounce-slow': 'bounce 2s infinite',
+      },
     },
   },
   plugins: [],

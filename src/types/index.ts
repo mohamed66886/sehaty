@@ -94,10 +94,11 @@ export interface HomeworkSubmission {
 export interface Question {
   id: string;
   question: string;
-  type: 'multiple_choice' | 'true_false' | 'short_answer';
-  options?: string[];
-  correctAnswer: string;
+  type: 'multiple_choice' | 'true_false' | 'essay';
+  options?: string[]; // For multiple choice
+  correctAnswer?: string; // For multiple choice and true/false
   points: number;
+  order: number;
 }
 
 export interface Exam {
@@ -106,11 +107,13 @@ export interface Exam {
   studentIds: string[];
   title: string;
   subject: string;
+  class: string;
   questions: Question[];
   totalScore: number;
   duration: number; // in minutes
   startDate: Date;
   endDate: Date;
+  showResultsImmediately: boolean; // Show results after submission or after review
   createdAt: Date;
 }
 

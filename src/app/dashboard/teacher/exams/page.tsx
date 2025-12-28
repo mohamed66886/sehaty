@@ -1,647 +1,586 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, getDocs, addDoc, query, where, Timestamp } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  orderBy,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Student, Exam, Question } from '@/types';
-import { 
-  Button,
-  Card, 
-  Space, 
-  Row, 
-  Col,
-  Typography,
-  message,
-  ConfigProvider,
-  Input,
-  Badge,
-  Checkbox,
+import DashboardLayout from '@/components/DashboardLayout';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  FileText,
+  Search,
+  GraduationCap,
+  Clock,
+  Award,
+  HelpCircle,
+  BarChart3,
+} from 'lucide-react';
+import {
   Modal,
   Form,
+  Input,
+  Select,
+  DatePicker,
   InputNumber,
-  DatePicker
+  Button,
+  Space,
 } from 'antd';
-import { 
-  BookOutlined,
-  PlusOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
-  TeamOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  FieldTimeOutlined
-} from '@ant-design/icons';
-import arEG from 'antd/locale/ar_EG';
 import dayjs from 'dayjs';
-import Link from 'next/link';
+import 'dayjs/locale/ar';
 
-const { Title, Text } = Typography;
+dayjs.locale('ar');
 
-export default function ExamsPage() {
+interface Exam {
+  id: string;
+  teacherId: string;
+  title: string;
+  classId: string; // معرف الصف
+  className: string; // اسم الصف
+  duration: number; // in minutes
+  totalMarks: number;
+  startDate: Date; // تاريخ ووقت البداية
+  endDate: Date; // تاريخ ووقت النهاية
+  questions: ExamQuestion[];
+  createdAt: Date;
+}
+
+interface ExamQuestion {
+  id: string;
+  question: string;
+  type: 'multiple-choice' | 'true-false' | 'short-answer';
+  options?: string[];
+  correctAnswer: string;
+  marks: number;
+}
+
+interface ClassItem {
+  id: string;
+  name: string;
+  subject: string;
+  teacherId: string;
+  isActive: boolean;
+}
+
+export default function TeacherExamsPage() {
+  const router = useRouter();
   const { user } = useAuth();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [form] = Form.useForm();
   const [exams, setExams] = useState<Exam[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    if (user && user.role === 'teacher') {
+      fetchData();
+      fetchClasses();
+    }
+  }, [user]);
+
+  const fetchClasses = async () => {
     if (!user?.uid) return;
 
     try {
-      const usersRef = collection(db, 'users');
-      const studentsQuery = query(usersRef, where('role', '==', 'student'));
-      const studentsSnapshot = await getDocs(studentsQuery);
-      
-      const studentsData = studentsSnapshot.docs
-        .map(doc => ({
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-        }) as Student)
-        .filter(student => student.teacherIds?.includes(user.uid));
-      
-      setStudents(studentsData);
+      const classesRef = collection(db, 'classes');
+      const q = query(classesRef, where('teacherId', '==', user.uid));
+      const snapshot = await getDocs(q);
 
-      // Load exams
-      const examsRef = collection(db, 'exams');
-      const examsQuery = query(examsRef, where('teacherId', '==', user.uid));
-      const examsSnapshot = await getDocs(examsQuery);
-      
-      const examsData = examsSnapshot.docs.map(doc => ({
+      const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        startDate: doc.data().startDate?.toDate() || new Date(),
-        endDate: doc.data().endDate?.toDate() || new Date(),
-      })) as Exam[];
-      
+      })) as ClassItem[];
+
+      setClasses(data.filter((c) => c.isActive));
+    } catch (error) {
+      console.error('خطأ في جلب الصفوف:', error);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      // Fetch exams for this teacher only
+      const examsQuery = query(
+        collection(db, 'exams'),
+        orderBy('createdAt', 'desc')
+      );
+      const examsSnapshot = await getDocs(examsQuery);
+      const examsData = examsSnapshot.docs
+        .filter((doc) => doc.data().teacherId === user?.uid)
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          startDate: doc.data().startDate?.toDate() || new Date(),
+          endDate: doc.data().endDate?.toDate() || new Date(),
+        })) as Exam[];
       setExams(examsData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      message.error('حدث خطأ أثناء تحميل البيانات');
+      console.error('خطأ في جلب البيانات:', error);
     } finally {
       setLoading(false);
     }
-  }, [user?.uid]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  return (
-    <ConfigProvider locale={arEG} direction="rtl">
-      <DashboardLayout allowedRoles={['teacher']}>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* Header */}
-          <Card 
-            style={{ 
-              background: 'linear-gradient(135deg, rgb(147, 51, 234) 0%, rgb(168, 85, 247) 100%)', 
-              border: 'none' 
-            }}
-            styles={{ body: { padding: '16px' } }}
-          >
-            <Row justify="space-between" align="middle" gutter={[12, 12]}>
-              <Col xs={24} md={16}>
-                <Space direction="vertical" size={4}>
-                  <Title 
-                    level={2} 
-                    style={{ 
-                      margin: 0, 
-                      color: 'white', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '12px',
-                      fontSize: 'clamp(20px, 5vw, 28px)'
-                    }}
-                  >
-                    <BookOutlined style={{ fontSize: 'clamp(24px, 5vw, 32px)' }} />
-                    الامتحانات
-                  </Title>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 'clamp(13px, 3vw, 15px)' }}>
-                    إنشاء وإدارة الامتحانات
-                  </Text>
-                </Space>
-              </Col>
-              <Col xs={24} md={8} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  type="default"
-                  size="large"
-                  icon={<PlusOutlined />}
-                  onClick={() => setShowForm(true)}
-                  block
-                  style={{ 
-                    background: 'white', 
-                    color: 'rgb(147, 51, 234)',
-                    fontWeight: '600',
-                    height: '48px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                  }}
-                >
-                  إنشاء امتحان جديد
-                </Button>
-              </Col>
-            </Row>
-          </Card>
-
-          {/* Stats */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Space>
-                  <div style={{ 
-                    padding: '12px', 
-                    background: '#f3e8ff', 
-                    color: '#9333ea', 
-                    borderRadius: '8px' 
-                  }}>
-                    <BookOutlined style={{ fontSize: '24px' }} />
-                  </div>
-                  <div>
-                    <Text type="secondary" style={{ fontSize: '13px' }}>إجمالي الامتحانات</Text>
-                    <Title level={3} style={{ margin: 0 }}>{exams.length}</Title>
-                  </div>
-                </Space>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Space>
-                  <div style={{ 
-                    padding: '12px', 
-                    background: '#dcfce7', 
-                    color: '#16a34a', 
-                    borderRadius: '8px' 
-                  }}>
-                    <CalendarOutlined style={{ fontSize: '24px' }} />
-                  </div>
-                  <div>
-                    <Text type="secondary" style={{ fontSize: '13px' }}>امتحانات قادمة</Text>
-                    <Title level={3} style={{ margin: 0 }}>
-                      {exams.filter(exam => new Date(exam.startDate) > new Date()).length}
-                    </Title>
-                  </div>
-                </Space>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card>
-                <Space>
-                  <div style={{ 
-                    padding: '12px', 
-                    background: '#dbeafe', 
-                    color: '#2563eb', 
-                    borderRadius: '8px' 
-                  }}>
-                    <TeamOutlined style={{ fontSize: '24px' }} />
-                  </div>
-                  <div>
-                    <Text type="secondary" style={{ fontSize: '13px' }}>إجمالي الطلاب</Text>
-                    <Title level={3} style={{ margin: 0 }}>{students.length}</Title>
-                  </div>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Exams List */}
-          {exams.length === 0 ? (
-            <Card>
-              <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center', padding: '40px 0' }}>
-                <BookOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-                <Text type="secondary">لا توجد امتحانات</Text>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<PlusOutlined />}
-                  onClick={() => setShowForm(true)}
-                  style={{ 
-                    background: 'rgb(147, 51, 234)',
-                    borderColor: 'rgb(147, 51, 234)',
-                    height: '44px'
-                  }}
-                >
-                  إنشاء أول امتحان
-                </Button>
-              </Space>
-            </Card>
-          ) : (
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              {exams.map((exam) => {
-                const isUpcoming = new Date(exam.startDate) > new Date();
-                const isActive = new Date(exam.startDate) <= new Date() && new Date(exam.endDate) >= new Date();
-                const isPast = new Date(exam.endDate) < new Date();
-                
-                return (
-                  <Card
-                    key={exam.id}
-                    styles={{ body: { padding: '16px' } }}
-                    style={{ borderRadius: '8px' }}
-                  >
-                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                      {/* Title and Badge */}
-                      <Row justify="space-between" align="middle">
-                        <Col>
-                          <Title level={4} style={{ margin: 0, fontSize: 'clamp(16px, 4vw, 18px)' }}>
-                            {exam.title}
-                          </Title>
-                        </Col>
-                        <Col>
-                          {isUpcoming && <Badge status="processing" text="قادم" />}
-                          {isActive && <Badge status="success" text="نشط" />}
-                          {isPast && <Badge status="error" text="منتهي" />}
-                        </Col>
-                      </Row>
-
-                      {/* Subject */}
-                      <Text type="secondary" style={{ fontSize: '14px' }}>
-                        {exam.subject}
-                      </Text>
-
-                      {/* Info */}
-                      <Row gutter={[8, 8]}>
-                        <Col xs={24}>
-                          <Space size="small">
-                            <CalendarOutlined style={{ color: '#6b7280' }} />
-                            <Text type="secondary" style={{ fontSize: '13px' }}>
-                              من {new Date(exam.startDate).toLocaleDateString('ar-EG')} 
-                              إلى {new Date(exam.endDate).toLocaleDateString('ar-EG')}
-                            </Text>
-                          </Space>
-                        </Col>
-                        <Col xs={12} sm={8}>
-                          <Space size="small">
-                            <ClockCircleOutlined style={{ color: '#6b7280' }} />
-                            <Text type="secondary" style={{ fontSize: '13px' }}>
-                              {exam.duration} دقيقة
-                            </Text>
-                          </Space>
-                        </Col>
-                        <Col xs={12} sm={8}>
-                          <Space size="small">
-                            <TeamOutlined style={{ color: '#6b7280' }} />
-                            <Text type="secondary" style={{ fontSize: '13px' }}>
-                              {exam.studentIds.length} طالب
-                            </Text>
-                          </Space>
-                        </Col>
-                        <Col xs={12} sm={8}>
-                          <Space size="small">
-                            <BookOutlined style={{ color: '#6b7280' }} />
-                            <Text type="secondary" style={{ fontSize: '13px' }}>
-                              {exam.questions.length} سؤال
-                            </Text>
-                          </Space>
-                        </Col>
-                      </Row>
-
-                      {/* Total Score */}
-                      <Card style={{ background: '#f9fafb', border: 'none' }}>
-                        <Row justify="space-between" align="middle">
-                          <Text type="secondary" style={{ fontSize: '13px' }}>الدرجة الكلية</Text>
-                          <Text strong style={{ fontSize: '18px', color: 'rgb(147, 51, 234)' }}>
-                            {exam.totalScore}
-                          </Text>
-                        </Row>
-                      </Card>
-
-                      {/* Actions */}
-                      <Row gutter={[8, 8]}>
-                        <Col xs={24} sm={12}>
-                          <Link href={`/dashboard/teacher/exams/${exam.id}`} style={{ display: 'block' }}>
-                            <Button
-                              type="primary"
-                              size="large"
-                              block
-                              style={{ 
-                                background: 'rgb(147, 51, 234)',
-                                borderColor: 'rgb(147, 51, 234)',
-                                height: '44px'
-                              }}
-                            >
-                              عرض التفاصيل
-                            </Button>
-                          </Link>
-                        </Col>
-                        <Col xs={24} sm={12}>
-                          <Link href={`/dashboard/teacher/exams/${exam.id}/results`} style={{ display: 'block' }}>
-                            <Button
-                              size="large"
-                              block
-                              style={{ height: '44px' }}
-                            >
-                              النتائج
-                            </Button>
-                          </Link>
-                        </Col>
-                      </Row>
-                    </Space>
-                  </Card>
-                );
-              })}
-            </Space>
-          )}
-        </Space>
-
-        {/* Add Exam Modal */}
-        <Modal
-          title={<Text strong style={{ fontSize: '18px' }}>إنشاء امتحان جديد</Text>}
-          open={showForm}
-          onCancel={() => setShowForm(false)}
-          footer={null}
-          width={800}
-          style={{ top: 20 }}
-        >
-          <ExamForm
-            students={students}
-            teacherId={user?.uid || ''}
-            onClose={() => setShowForm(false)}
-            onSuccess={() => {
-              setShowForm(false);
-              loadData();
-            }}
-          />
-        </Modal>
-      </DashboardLayout>
-    </ConfigProvider>
-  );
-}
-
-interface ExamFormProps {
-  students: Student[];
-  teacherId: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function ExamForm({ students, teacherId, onClose, onSuccess }: ExamFormProps) {
-  const [form] = Form.useForm();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  const addQuestion = () => {
-    const newQuestion: Question = {
-      id: Date.now().toString(),
-      question: '',
-      type: 'multiple_choice',
-      options: ['', '', '', ''],
-      correctAnswer: '',
-      points: 1,
-    };
-    setQuestions([...questions, newQuestion]);
   };
 
-  const updateQuestion = (index: number, field: keyof Question, value: any) => {
-    const updated = [...questions];
-    updated[index] = { ...updated[index], [field]: value };
-    setQuestions(updated);
+  const handleOpenModal = (exam?: Exam) => {
+    if (exam) {
+      setEditingExam(exam);
+      form.setFieldsValue({
+        title: exam.title,
+        classId: exam.classId,
+        duration: exam.duration,
+        totalMarks: exam.totalMarks,
+        startDateTime: dayjs(exam.startDate),
+        endDateTime: dayjs(exam.endDate),
+      });
+    } else {
+      setEditingExam(null);
+      const now = dayjs();
+      const later = dayjs().add(2, 'hour');
+      form.setFieldsValue({
+        title: '',
+        classId: undefined,
+        duration: 60,
+        totalMarks: 100,
+        startDateTime: now,
+        endDateTime: later,
+      });
+    }
+    setShowModal(true);
   };
 
-  const removeQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingExam(null);
+    form.resetFields();
   };
 
   const handleSubmit = async (values: any) => {
-    if (questions.length === 0) {
-      message.warning('يجب إضافة سؤال واحد على الأقل');
+    if (!user) return;
+
+    // Validate dates
+    const startDateTime = values.startDateTime.toDate();
+    const endDateTime = values.endDateTime.toDate();
+
+    if (endDateTime <= startDateTime) {
+      Modal.error({
+        title: 'خطأ',
+        content: 'تاريخ ووقت النهاية يجب أن يكون بعد تاريخ ووقت البداية',
+        okText: 'حسناً',
+      });
       return;
     }
 
-    setSaving(true);
+    setLoading(true);
 
     try {
-      const totalScore = questions.reduce((sum, q) => sum + q.points, 0);
-      
-      const examsRef = collection(db, 'exams');
-      await addDoc(examsRef, {
-        teacherId,
-        title: values.title,
-        subject: values.subject,
-        duration: values.duration,
-        startDate: Timestamp.fromDate(new Date(values.startDate)),
-        endDate: Timestamp.fromDate(new Date(values.endDate)),
-        studentIds: values.studentIds,
-        questions,
-        totalScore,
-        createdAt: Timestamp.now(),
-      });
+      const selectedClass = classes.find((c) => c.id === values.classId);
 
-      message.success('تم إنشاء الامتحان بنجاح');
-      onSuccess();
+      const examData = {
+        teacherId: user.uid,
+        title: values.title,
+        classId: values.classId,
+        className: selectedClass?.name || '',
+        duration: values.duration,
+        totalMarks: values.totalMarks,
+        startDate: startDateTime,
+        endDate: endDateTime,
+      };
+
+      if (editingExam) {
+        await updateDoc(doc(db, 'exams', editingExam.id), examData);
+      } else {
+        await addDoc(collection(db, 'exams'), {
+          ...examData,
+          questions: [],
+          createdAt: new Date(),
+        });
+      }
+
+      await fetchData();
+      handleCloseModal();
+
+      Modal.success({
+        title: 'نجح',
+        content: editingExam
+          ? 'تم تحديث الامتحان بنجاح'
+          : 'تم إضافة الامتحان بنجاح',
+        okText: 'حسناً',
+      });
     } catch (error) {
-      console.error('Error creating exam:', error);
-      message.error('حدث خطأ أثناء إنشاء الامتحان');
+      console.error('خطأ في حفظ الامتحان:', error);
+      Modal.error({
+        title: 'خطأ',
+        content: 'فشل حفظ الامتحان. يرجى المحاولة مرة أخرى.',
+        okText: 'حسناً',
+      });
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  const selectAll = () => {
-    form.setFieldsValue({ studentIds: students.map(s => s.uid) });
+  const handleDelete = async (examId: string) => {
+    Modal.confirm({
+      title: 'تأكيد الحذف',
+      content: 'هل أنت متأكد من حذف هذا الامتحان؟ لا يمكن التراجع عن هذا الإجراء.',
+      okText: 'نعم، احذف',
+      cancelText: 'إلغاء',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setLoading(true);
+        try {
+          await deleteDoc(doc(db, 'exams', examId));
+          await fetchData();
+          Modal.success({
+            title: 'نجح',
+            content: 'تم حذف الامتحان بنجاح',
+            okText: 'حسناً',
+          });
+        } catch (error) {
+          console.error('خطأ في حذف الامتحان:', error);
+          Modal.error({
+            title: 'خطأ',
+            content: 'فشل حذف الامتحان. يرجى المحاولة مرة أخرى.',
+            okText: 'حسناً',
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
+  const filteredExams = exams.filter((exam) => {
+    const matchesSearch =
+      exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exam.className.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClass = !filterClass || exam.classId === filterClass;
+    return matchesSearch && matchesClass;
+  });
+
+  if (loading) {
+    return (
+      <DashboardLayout allowedRoles={['teacher']}>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={handleSubmit}
-      initialValues={{ duration: 60, studentIds: [] }}
-      style={{ marginTop: '20px' }}
-    >
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="عنوان الامتحان"
-            name="title"
-            rules={[{ required: true, message: 'الرجاء إدخال عنوان الامتحان' }]}
+    <DashboardLayout allowedRoles={['teacher']}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              إدارة الامتحانات
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              إنشاء وإدارة امتحاناتك
+            </p>
+          </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn btn-primary flex items-center gap-2"
           >
-            <Input
-              size="large"
-              placeholder="مثال: امتحان الشهر الأول"
-              style={{ height: '44px' }}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="المادة"
-            name="subject"
-            rules={[{ required: true, message: 'الرجاء إدخال المادة' }]}
-          >
-            <Input
-              size="large"
-              placeholder="مثال: الرياضيات"
-              style={{ height: '44px' }}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
+            <Plus className="w-5 h-5" />
+            إضافة امتحان
+          </button>
+        </div>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Form.Item
-            label="المدة (بالدقائق)"
-            name="duration"
-            rules={[{ required: true, message: 'الرجاء إدخال المدة' }]}
-          >
-            <InputNumber
-              size="large"
-              min={1}
-              placeholder="60"
-              style={{ width: '100%', height: '44px' }}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Form.Item
-            label="تاريخ البدء"
-            name="startDate"
-            rules={[{ required: true, message: 'الرجاء اختيار تاريخ البدء' }]}
-          >
-            <Input
-              type="datetime-local"
-              size="large"
-              style={{ height: '44px' }}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Form.Item
-            label="تاريخ الانتهاء"
-            name="endDate"
-            rules={[{ required: true, message: 'الرجاء اختيار تاريخ الانتهاء' }]}
-          >
-            <Input
-              type="datetime-local"
-              size="large"
-              style={{ height: '44px' }}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
+        {/* Filters */}
+        <div className="card mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="بحث في الامتحانات..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input pl-10 w-full"
+              />
+            </div>
+            <select
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="input w-full"
+            >
+              <option value="">كل الصفوف</option>
+              {classes.map((classItem) => (
+                <option key={classItem.id} value={classItem.id}>
+                  {classItem.name} - {classItem.subject}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <Form.Item
-        label={
-          <Row justify="space-between" style={{ width: '100%' }}>
-            <Text>الطلاب</Text>
-            <Button type="link" size="small" onClick={selectAll}>
-              تحديد الكل
-            </Button>
-          </Row>
-        }
-        name="studentIds"
-        rules={[{ required: true, message: 'الرجاء اختيار الطلاب' }]}
-      >
-        <Checkbox.Group style={{ width: '100%' }}>
-          <Space direction="vertical" style={{ 
-            width: '100%', 
-            maxHeight: '180px', 
-            overflowY: 'auto',
-            border: '1px solid #d9d9d9',
-            borderRadius: '8px',
-            padding: '12px'
-          }}>
-            {students.map(student => (
-              <Checkbox key={student.uid} value={student.uid} style={{ marginLeft: 0 }}>
-                {student.name} - {student.class}
-              </Checkbox>
+        {/* Exams List */}
+        {filteredExams.length === 0 ? (
+          <div className="card text-center py-12">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {searchTerm || filterClass
+                ? 'لا توجد امتحانات تطابق البحث'
+                : 'لم يتم إنشاء أي امتحانات بعد'}
+            </p>
+            {!searchTerm && !filterClass && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn btn-primary inline-flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                إنشاء أول امتحان
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredExams.map((exam) => (
+              <div key={exam.id} className="card">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {exam.title}
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                      الصف: {exam.className}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      المدة: {exam.duration} دقيقة
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Award className="w-4 h-4" />
+                      الدرجة الكلية: {exam.totalMarks}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4" />
+                      الأسئلة: {exam.questions?.length || 0}
+                    </p>
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-xs">
+                        <strong>البداية:</strong>{' '}
+                        {new Date(exam.startDate).toLocaleString('ar-EG')}
+                      </p>
+                      <p className="text-xs">
+                        <strong>النهاية:</strong>{' '}
+                        {new Date(exam.endDate).toLocaleString('ar-EG')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() =>
+                      router.push(`/dashboard/teacher/exams/${exam.id}`)
+                    }
+                    className="btn btn-primary flex-1 text-sm"
+                  >
+                    إدارة الأسئلة
+                  </button>
+                  <button
+                    onClick={() =>
+                      router.push(`/dashboard/teacher/exams/${exam.id}/results`)
+                    }
+                    className="btn btn-secondary flex items-center justify-center gap-1 px-3"
+                    title="عرض النتائج"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenModal(exam)}
+                    className="btn btn-secondary flex items-center justify-center"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(exam.id)}
+                    className="btn bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 flex items-center justify-center"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             ))}
-          </Space>
-        </Checkbox.Group>
-      </Form.Item>
+          </div>
+        )}
+      </div>
 
-      <Form.Item
-        label={
-          <Row justify="space-between" style={{ width: '100%' }}>
-            <Text>الأسئلة</Text>
-            <Button type="link" size="small" icon={<PlusOutlined />} onClick={addQuestion}>
-              إضافة سؤال
-            </Button>
-          </Row>
+      {/* Modal */}
+      <Modal
+        title={
+          <span className="text-xl font-bold">
+            {editingExam ? 'تعديل الامتحان' : 'إضافة امتحان جديد'}
+          </span>
         }
+        open={showModal}
+        onCancel={handleCloseModal}
+        footer={null}
+        width={600}
+        destroyOnClose
+        centered
       >
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
-          {questions.map((q, index) => (
-            <Card 
-              key={q.id} 
-              size="small"
-              styles={{ body: { padding: '12px' } }}
-              extra={
-                <Button 
-                  type="text" 
-                  danger 
-                  icon={<DeleteOutlined />} 
-                  onClick={() => removeQuestion(index)}
-                  size="small"
-                />
-              }
-              title={<Text style={{ fontSize: '13px' }}>سؤال {index + 1}</Text>}
-            >
-              <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                <Input
-                  placeholder="نص السؤال"
-                  value={q.question}
-                  onChange={(e) => updateQuestion(index, 'question', e.target.value)}
-                  style={{ fontSize: '13px' }}
-                />
-                <Row gutter={8}>
-                  <Col span={12}>
-                    <InputNumber
-                      placeholder="الدرجة"
-                      min={1}
-                      value={q.points}
-                      onChange={(value) => updateQuestion(index, 'points', value || 1)}
-                      style={{ width: '100%', fontSize: '13px' }}
-                    />
-                  </Col>
-                  <Col span={12}>
-                    <Input
-                      placeholder="الإجابة الصحيحة"
-                      value={q.correctAnswer}
-                      onChange={(e) => updateQuestion(index, 'correctAnswer', e.target.value)}
-                      style={{ fontSize: '13px' }}
-                    />
-                  </Col>
-                </Row>
-              </Space>
-            </Card>
-          ))}
-        </Space>
-      </Form.Item>
+        <Form
+          form={form}
+          onFinish={handleSubmit}
+          layout="vertical"
+          className="mt-6"
+          initialValues={{
+            duration: 60,
+            totalMarks: 100,
+          }}
+        >
+          <Form.Item
+            name="title"
+            label={<span className="font-semibold">اسم الامتحان</span>}
+            rules={[{ required: true, message: 'يرجى إدخال اسم الامتحان' }]}
+          >
+            <Input
+              size="large"
+              placeholder="مثال: امتحان الرياضيات - الفصل الأول"
+              className="rounded-lg"
+            />
+          </Form.Item>
 
-      <Form.Item style={{ marginBottom: 0, marginTop: '20px' }}>
-        <Row gutter={[12, 12]}>
-          <Col xs={24} sm={12}>
-            <Button
-              type="primary"
-              htmlType="submit"
+          <Form.Item
+            name="classId"
+            label={<span className="font-semibold">الصف</span>}
+            rules={[{ required: true, message: 'يرجى اختيار الصف' }]}
+          >
+            <Select
               size="large"
-              loading={saving}
-              block
-              disabled={questions.length === 0}
-              style={{ 
-                background: 'rgb(147, 51, 234)',
-                borderColor: 'rgb(147, 51, 234)',
-                height: '44px'
-              }}
+              placeholder="اختر الصف"
+              className="w-full"
+              showSearch
+              optionFilterProp="children"
+              notFoundContent={
+                classes.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 mb-2">لا توجد صفوف متاحة</p>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        handleCloseModal();
+                        router.push('/dashboard/teacher/classes');
+                      }}
+                    >
+                      إضافة صف جديد
+                    </Button>
+                  </div>
+                ) : null
+              }
             >
-              {saving ? 'جاري الحفظ...' : 'إنشاء الامتحان'}
-            </Button>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Button
+              {classes.map((classItem) => (
+                <Select.Option key={classItem.id} value={classItem.id}>
+                  {classItem.name} - {classItem.subject}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              name="duration"
+              label={<span className="font-semibold">المدة (دقيقة)</span>}
+              rules={[{ required: true, message: 'يرجى إدخال المدة' }]}
+            >
+              <InputNumber
+                size="large"
+                min={1}
+                className="w-full rounded-lg"
+                placeholder="60"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="totalMarks"
+              label={<span className="font-semibold">الدرجة الكلية</span>}
+              rules={[{ required: true, message: 'يرجى إدخال الدرجة الكلية' }]}
+            >
+              <InputNumber
+                size="large"
+                min={1}
+                className="w-full rounded-lg"
+                placeholder="100"
+              />
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            name="startDateTime"
+            label={<span className="font-semibold">تاريخ ووقت البداية</span>}
+            rules={[
+              { required: true, message: 'يرجى اختيار تاريخ ووقت البداية' },
+            ]}
+          >
+            <DatePicker
               size="large"
-              onClick={onClose}
-              block
-              style={{ height: '44px' }}
-            >
-              إلغاء
-            </Button>
-          </Col>
-        </Row>
-      </Form.Item>
-    </Form>
+              showTime
+              format="YYYY-MM-DD HH:mm"
+              className="w-full rounded-lg"
+              placeholder="اختر التاريخ والوقت"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="endDateTime"
+            label={<span className="font-semibold">تاريخ ووقت النهاية</span>}
+            rules={[
+              { required: true, message: 'يرجى اختيار تاريخ ووقت النهاية' },
+            ]}
+          >
+            <DatePicker
+              size="large"
+              showTime
+              format="YYYY-MM-DD HH:mm"
+              className="w-full rounded-lg"
+              placeholder="اختر التاريخ والوقت"
+            />
+          </Form.Item>
+
+          <Form.Item className="mb-0 mt-6">
+            <Space className="w-full justify-end">
+              <Button
+                size="large"
+                onClick={handleCloseModal}
+                className="min-w-[100px]"
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                htmlType="submit"
+                loading={loading}
+                className="min-w-[100px] bg-primary-600 hover:bg-primary-700"
+              >
+                {editingExam ? 'تحديث' : 'إضافة'}
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </DashboardLayout>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Lalezar } from 'next/font/google';
 
 const lalezar = Lalezar({ 
@@ -24,9 +25,11 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={lalezar.variable}>
       <body className={lalezar.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

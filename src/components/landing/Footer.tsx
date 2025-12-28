@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { BookIcon, EmailIcon, PhoneIcon, LocationIcon, InstagramIcon, FacebookIcon, TwitterIcon, LinkedInIcon } from "@/components/icons/Icons";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Footer() {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
+  const { isDarkMode } = useTheme();
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -43,25 +45,35 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer ref={footerRef} className="bg-white text-gray-900">
+    <footer ref={footerRef} className={`transition-colors duration-300 ${
+      isDarkMode ? 'bg-gradient-to-b from-slate-900 to-slate-950 text-white' : 'bg-white text-gray-900'
+    }`}>
       <div className="container mx-auto px-4 py-8 sm:py-12">
         {/* Mobile Accordion Layout */}
         <div className="md:hidden space-y-4">
           {/* About - Always Visible */}
-          <div className={`text-center pb-4 border-b border-gray-200 transition-all duration-1000 ${
+          <div className={`text-center pb-4 border-b transition-all duration-1000 ${
+            isDarkMode ? 'border-slate-700' : 'border-gray-200'
+          } ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             <div className="flex items-center justify-center gap-2 mb-3">
-              <BookIcon className="w-6 h-6 text-primary-600" />
+              <BookIcon className={`w-6 h-6 transition-colors duration-300 ${
+                isDarkMode ? 'text-sky-400' : 'text-primary-600'
+              }`} />
               <h3 className="text-xl font-bold">حصتي</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className={`text-sm transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               منصة تعليمية متكاملة لإدارة المراكز التعليمية
             </p>
           </div>
 
           {/* Quick Links Accordion */}
-          <div className={`border-b border-gray-200 pb-4 transition-all duration-1000 delay-200 ${
+          <div className={`border-b pb-4 transition-all duration-1000 delay-200 ${
+            isDarkMode ? 'border-slate-700' : 'border-gray-200'
+          } ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             <button
@@ -81,22 +93,30 @@ export default function Footer() {
             {openSection === 'links' && (
               <ul className="space-y-2 mt-3">
                 <li>
-                  <a href="#hero" className="text-sm text-gray-600 hover:text-primary-600 transition-colors block">
+                  <a href="#hero" className={`text-sm transition-colors block ${
+                    isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                  }`}>
                     الرئيسية
                   </a>
                 </li>
                 <li>
-                  <a href="#features" className="text-sm text-gray-600 hover:text-primary-600 transition-colors block">
+                  <a href="#features" className={`text-sm transition-colors block ${
+                    isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                  }`}>
                     المميزات
                   </a>
                 </li>
                 <li>
-                  <a href="#how-it-works" className="text-sm text-gray-600 hover:text-primary-600 transition-colors block">
+                  <a href="#how-it-works" className={`text-sm transition-colors block ${
+                    isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                  }`}>
                     طريقة الاستخدام
                   </a>
                 </li>
                 <li>
-                  <a href="#teachers" className="text-sm text-gray-600 hover:text-primary-600 transition-colors block">
+                  <a href="#teachers" className={`text-sm transition-colors block ${
+                    isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                  }`}>
                     المدرسين
                   </a>
                 </li>
@@ -105,7 +125,9 @@ export default function Footer() {
           </div>
 
           {/* Services Accordion */}
-          <div className={`border-b border-gray-200 pb-4 transition-all duration-1000 delay-300 ${
+          <div className={`border-b pb-4 transition-all duration-1000 delay-300 ${
+            isDarkMode ? 'border-slate-700' : 'border-gray-200'
+          } ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             <button
@@ -125,19 +147,29 @@ export default function Footer() {
             {openSection === 'services' && (
               <ul className="space-y-2 mt-3">
                 <li>
-                  <span className="text-sm text-gray-600 block">إدارة الطلاب</span>
+                  <span className={`text-sm block transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>إدارة الطلاب</span>
                 </li>
                 <li>
-                  <span className="text-sm text-gray-600 block">تسجيل الحضور</span>
+                  <span className={`text-sm block transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>تسجيل الحضور</span>
                 </li>
                 <li>
-                  <span className="text-sm text-gray-600 block">إدارة الواجبات</span>
+                  <span className={`text-sm block transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>إدارة الواجبات</span>
                 </li>
                 <li>
-                  <span className="text-sm text-gray-600 block">إدارة الامتحانات</span>
+                  <span className={`text-sm block transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>إدارة الامتحانات</span>
                 </li>
                 <li>
-                  <span className="text-sm text-gray-600 block">التقارير والإحصائيات</span>
+                  <span className={`text-sm block transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>التقارير والإحصائيات</span>
                 </li>
               </ul>
             )}
@@ -150,31 +182,59 @@ export default function Footer() {
             <h4 className="text-base font-bold mb-3">تواصل معنا</h4>
             <ul className="space-y-2">
               <li className="flex items-center justify-center gap-2">
-                <EmailIcon className="w-4 h-4 text-primary-600" />
-                <span className="text-sm text-gray-600">info@hesaty.com</span>
+                <EmailIcon className={`w-4 h-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-sm transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>info@hesaty.com</span>
               </li>
               <li className="flex items-center justify-center gap-2">
-                <PhoneIcon className="w-4 h-4 text-primary-600" />
-                <span className="text-sm text-gray-600">+20 123 456 7890</span>
+                <PhoneIcon className={`w-4 h-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-sm transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>+20 123 456 7890</span>
               </li>
               <li className="flex items-center justify-center gap-2">
-                <LocationIcon className="w-4 h-4 text-primary-600" />
-                <span className="text-sm text-gray-600">القاهرة، مصر</span>
+                <LocationIcon className={`w-4 h-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-sm transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>القاهرة، مصر</span>
               </li>
             </ul>
             
             {/* Social Media */}
             <div className="flex gap-3 mt-4 justify-center">
-              <a href="#" className="w-9 h-9 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Facebook">
+              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Facebook">
                 <FacebookIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-9 h-9 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Twitter">
+              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Twitter">
                 <TwitterIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-9 h-9 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Instagram">
+              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Instagram">
                 <InstagramIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-9 h-9 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="LinkedIn">
+              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="LinkedIn">
                 <LinkedInIcon className="w-5 h-5" />
               </a>
             </div>
@@ -188,10 +248,14 @@ export default function Footer() {
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             <div className="flex items-center gap-2 mb-4">
-              <BookIcon className="w-6 h-6 text-primary-600" />
+              <BookIcon className={`w-6 h-6 transition-colors duration-300 ${
+                isDarkMode ? 'text-sky-400' : 'text-primary-600'
+              }`} />
               <h3 className="text-xl font-bold">حصتي</h3>
             </div>
-            <p className="text-base text-gray-600 mb-4">
+            <p className={`text-base mb-4 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               منصة تعليمية متكاملة لإدارة المراكز التعليمية ومتابعة الطلاب لحظة بلحظة
             </p>
           </div>
@@ -203,22 +267,30 @@ export default function Footer() {
             <h4 className="text-lg font-bold mb-4">روابط سريعة</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#hero" className="text-base text-gray-600 hover:text-primary-600 transition-colors">
+                <a href="#hero" className={`text-base transition-colors ${
+                  isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                }`}>
                   الرئيسية
                 </a>
               </li>
               <li>
-                <a href="#features" className="text-base text-gray-600 hover:text-primary-600 transition-colors">
+                <a href="#features" className={`text-base transition-colors ${
+                  isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                }`}>
                   المميزات
                 </a>
               </li>
               <li>
-                <a href="#how-it-works" className="text-base text-gray-600 hover:text-primary-600 transition-colors">
+                <a href="#how-it-works" className={`text-base transition-colors ${
+                  isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                }`}>
                   طريقة الاستخدام
                 </a>
               </li>
               <li>
-                <a href="#teachers" className="text-base text-gray-600 hover:text-primary-600 transition-colors">
+                <a href="#teachers" className={`text-base transition-colors ${
+                  isDarkMode ? 'text-gray-400 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+                }`}>
                   المدرسين
                 </a>
               </li>
@@ -232,19 +304,29 @@ export default function Footer() {
             <h4 className="text-lg font-bold mb-4">الخدمات</h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-base text-gray-600">إدارة الطلاب</span>
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>إدارة الطلاب</span>
               </li>
               <li>
-                <span className="text-base text-gray-600">تسجيل الحضور</span>
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>تسجيل الحضور</span>
               </li>
               <li>
-                <span className="text-base text-gray-600">إدارة الواجبات</span>
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>إدارة الواجبات</span>
               </li>
               <li>
-                <span className="text-base text-gray-600">إدارة الامتحانات</span>
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>إدارة الامتحانات</span>
               </li>
               <li>
-                <span className="text-base text-gray-600">التقارير والإحصائيات</span>
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>التقارير والإحصائيات</span>
               </li>
             </ul>
           </div>
@@ -256,31 +338,59 @@ export default function Footer() {
             <h4 className="text-lg font-bold mb-4">تواصل معنا</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
-                <EmailIcon className="w-5 h-5 text-primary-600" />
-                <span className="text-base text-gray-600">info@hesaty.com</span>
+                <EmailIcon className={`w-5 h-5 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>info@hesaty.com</span>
               </li>
               <li className="flex items-center gap-2">
-                <PhoneIcon className="w-5 h-5 text-primary-600" />
-                <span className="text-base text-gray-600">+20 123 456 7890</span>
+                <PhoneIcon className={`w-5 h-5 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>+20 123 456 7890</span>
               </li>
               <li className="flex items-center gap-2">
-                <LocationIcon className="w-5 h-5 text-primary-600" />
-                <span className="text-base text-gray-600">القاهرة، مصر</span>
+                <LocationIcon className={`w-5 h-5 transition-colors duration-300 ${
+                  isDarkMode ? 'text-sky-400' : 'text-primary-600'
+                }`} />
+                <span className={`text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>القاهرة، مصر</span>
               </li>
             </ul>
             
             {/* Social Media */}
             <div className="flex gap-4 mt-4">
-              <a href="#" className="w-10 h-10 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Facebook">
+              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Facebook">
                 <FacebookIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Twitter">
+              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Twitter">
                 <TwitterIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="Instagram">
+              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="Instagram">
                 <InstagramIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-full flex items-center justify-center transition-colors" aria-label="LinkedIn">
+              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
+              }`} aria-label="LinkedIn">
                 <LinkedInIcon className="w-5 h-5" />
               </a>
             </div>
@@ -288,10 +398,14 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className={`border-t border-gray-200 pt-6 sm:pt-8 text-center mt-6 transition-all duration-1000 delay-500 ${
+        <div className={`border-t pt-6 sm:pt-8 text-center mt-6 transition-all duration-1000 delay-500 ${
+          isDarkMode ? 'border-slate-700' : 'border-gray-200'
+        } ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
         }`}>
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className={`text-sm sm:text-base transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             © {new Date().getFullYear()} حصتي. جميع الحقوق محفوظة.
           </p>
         </div>

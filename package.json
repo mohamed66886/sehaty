@@ -12,6 +12,7 @@
     "@ant-design/icons": "^6.1.0",
     "antd": "^6.1.2",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.19",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
@@ -20,6 +21,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.2",
     "recharts": "^3.6.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.2.1"
   },
   "devDependencies": {

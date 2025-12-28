@@ -81,6 +81,7 @@ export default function HomeworkPage() {
       
       const studentsData = studentsSnapshot.docs
         .map(doc => ({
+          uid: doc.id, // IMPORTANT: Add document ID as uid
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate() || new Date(),
         }) as Student)
@@ -157,7 +158,7 @@ export default function HomeworkPage() {
   return (
     <ConfigProvider locale={arEG} direction="rtl">
       <DashboardLayout allowedRoles={['teacher']}>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           {/* Header */}
           <Card 
             style={{ 
@@ -168,7 +169,7 @@ export default function HomeworkPage() {
           >
             <Row justify="space-between" align="middle" gutter={[12, 12]}>
               <Col xs={24} md={16}>
-                <Space direction="vertical" size={4}>
+                <Space orientation="vertical" size={4}>
                   <Title 
                     level={2} 
                     style={{ 
@@ -344,7 +345,7 @@ export default function HomeworkPage() {
           {/* Homework List */}
           {filteredHomework.length === 0 ? (
             <Card>
-              <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center', padding: '40px 0' }}>
+              <Space orientation="vertical" size="large" style={{ width: '100%', textAlign: 'center', padding: '40px 0' }}>
                 <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
                 <Text type="secondary">
                   {homework.length === 0 ? 'لا توجد واجبات منزلية' : 'لا توجد نتائج تطابق البحث'}
@@ -367,7 +368,7 @@ export default function HomeworkPage() {
               </Space>
             </Card>
           ) : (
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
               {filteredHomework.map((hw) => {
                 const stats = getHomeworkStats(hw);
                 const isOverdue = new Date(hw.deadline) < new Date();
@@ -381,7 +382,7 @@ export default function HomeworkPage() {
                     styles={{ body: { padding: '16px' } }}
                     style={{ borderRadius: '8px' }}
                   >
-                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
                       {/* Title and Badge */}
                       <Row justify="space-between" align="middle">
                         <Col>
@@ -461,7 +462,7 @@ export default function HomeworkPage() {
                           <Text type="secondary" style={{ fontSize: '13px', marginBottom: '8px', display: 'block' }}>
                             المرفقات:
                           </Text>
-                          <Space wrap size="small">
+                          <div>
                             {hw.attachments.map((file: any, idx: number) => {
                               let icon = <FileTextOutlined />;
                               let color = '#1890ff';
@@ -478,14 +479,14 @@ export default function HomeworkPage() {
                               }
                               
                               return (
-                                <Tag key={idx} icon={icon} color={color}>
+                                <Tag key={`hw-${hw.id}-attachment-${idx}-${file.name}`} icon={icon} color={color} style={{ marginBottom: '8px' }}>
                                   <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
                                     {file.name}
                                   </a>
                                 </Tag>
                               );
                             })}
-                          </Space>
+                          </div>
                         </div>
                       )}
 
@@ -585,10 +586,71 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
   // Get selected class details
   const selectedClass = classes.find(c => c.id === selectedClassId);
 
-  // Filter students by selected class name
+  // Debug: Log all students and selected class
+  console.log('📊 Debug Info:', {
+    selectedClassId,
+    selectedClass: selectedClass ? {
+      id: selectedClass.id,
+      name: selectedClass.name,
+      subject: selectedClass.subject
+    } : null,
+    totalStudents: students.length,
+    studentsData: students.map(s => ({
+      uid: s.uid,
+      name: s.name,
+      class: s.class,
+      hasClass: !!s.class,
+      teacherIds: s.teacherIds
+    }))
+  });
+
+  // Filter students by selected class name and ensure they have valid uid
+  // Students must belong to the selected class AND be linked to this teacher
   const filteredStudents = selectedClass 
-    ? students.filter(s => s.class === selectedClass.name)
+    ? students.filter(s => {
+        if (!s.uid) {
+          console.log('❌ Student without uid:', s.name);
+          return false;
+        }
+        
+        // Skip students without a class assigned
+        if (!s.class) {
+          console.log('⚠️ Student without class:', s.name);
+          return false;
+        }
+        
+        // Normalize both strings: trim and convert to lowercase
+        const studentClass = s.class.trim().toLowerCase().replace(/\s+/g, ' ');
+        const selectedClassName = selectedClass.name.trim().toLowerCase().replace(/\s+/g, ' ');
+        
+        // Must match the class name
+        const classMatch = studentClass === selectedClassName;
+        
+        // Must be linked to this teacher
+        const teacherMatch = s.teacherIds?.includes(teacherId);
+        
+        // Debug log for each student
+        console.log(`🔍 Checking ${s.name}:`, {
+          studentClass: `"${s.class}"`,
+          studentClassNormalized: `"${studentClass}"`,
+          selectedClassName: `"${selectedClass.name}"`,
+          selectedClassNameNormalized: `"${selectedClassName}"`,
+          classMatch,
+          teacherMatch,
+          willBeIncluded: classMatch && teacherMatch
+        });
+        
+        return classMatch && teacherMatch;
+      })
     : [];
+  
+  console.log('✅ Filtered Students Count:', filteredStudents.length);
+
+  // Count students without class assignment
+  const studentsWithoutClass = students.filter(s => !s.class && s.teacherIds?.includes(teacherId));
+
+  // Use filtered students only - no fallback to all students
+  const studentsToShow = filteredStudents;
 
   const getFileIcon = (file: UploadFile) => {
     const type = file.type || '';
@@ -603,6 +665,29 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
     setSaving(true);
 
     try {
+      // Validate required fields
+      if (!teacherId) {
+        message.error('خطأ: معرف المعلم غير موجود');
+        return;
+      }
+
+      if (!values.classId) {
+        message.error('الرجاء اختيار الصف');
+        return;
+      }
+
+      if (!values.studentIds || values.studentIds.length === 0) {
+        message.error('الرجاء اختيار طالب واحد على الأقل');
+        return;
+      }
+
+      // Get selected class details
+      const selectedClassForSubmit = classes.find(c => c.id === values.classId);
+      if (!selectedClassForSubmit) {
+        message.error('الصف المحدد غير موجود');
+        return;
+      }
+
       // Upload files to Firebase Storage
       const uploadedFiles = [];
       for (const file of fileList) {
@@ -613,25 +698,29 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
           uploadedFiles.push({
             name: file.name,
             url,
-            type: file.type,
-            size: file.size
+            type: file.type || 'application/octet-stream',
+            size: file.size || 0
           });
         }
       }
-      const homeworkRef = collection(db, 'homework');
-      await addDoc(homeworkRef, {
+      // Prepare homework data with all required fields
+      const homeworkData = {
         teacherId,
         title: values.title,
         description: values.description,
-        subject: selectedClass?.subject || '',
-        class: selectedClass?.name || '',
+        subject: selectedClassForSubmit.subject,
+        class: selectedClassForSubmit.name,
+        classId: values.classId,
         startDate: Timestamp.fromDate(new Date(values.startDate)),
         deadline: Timestamp.fromDate(new Date(values.deadline)),
         studentIds: values.studentIds,
         attachments: uploadedFiles,
         submissions: [],
         createdAt: Timestamp.now(),
-      });
+      };
+
+      const homeworkRef = collection(db, 'homework');
+      await addDoc(homeworkRef, homeworkData);
 
       message.success('تم إضافة الواجب بنجاح');
       form.resetFields();
@@ -647,7 +736,7 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
   };
 
   const selectAll = () => {
-    form.setFieldsValue({ studentIds: filteredStudents.map(s => s.uid) });
+    form.setFieldsValue({ studentIds: studentsToShow.map(s => s.uid) });
   };
 
   const handleClassChange = (value: string) => {
@@ -790,48 +879,61 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
         </Upload>
         {fileList.length > 0 && (
           <div style={{ marginTop: '12px' }}>
-            <Space wrap>
-              {fileList.map(file => (
-                <Tag 
-                  key={file.uid}
-                  closable
-                  onClose={() => setFileList(fileList.filter(f => f.uid !== file.uid))}
-                  icon={getFileIcon(file)}
-                  style={{ padding: '4px 8px' }}
-                >
-                  {file.name}
-                </Tag>
-              ))}
-            </Space>
+            {fileList.map(file => (
+              <Tag 
+                key={file.uid}
+                closable
+                onClose={() => setFileList(fileList.filter(f => f.uid !== file.uid))}
+                icon={getFileIcon(file)}
+                style={{ padding: '4px 8px', marginBottom: '8px' }}
+              >
+                {file.name}
+              </Tag>
+            ))}
           </div>
         )}
       </Form.Item>
 
-      <Form.Item
-        label={
-          <Row justify="space-between" style={{ width: '100%' }}>
-            <Text>الطلاب {selectedClass && `(${selectedClass.name})`}</Text>
-            <Button type="link" size="small" onClick={selectAll} disabled={!selectedClassId}>
-              تحديد الكل ({filteredStudents.length})
-            </Button>
-          </Row>
-        }
-        name="studentIds"
-        rules={[{ required: true, message: 'الرجاء اختيار الطلاب' }]}
-      >
-        <Select
-          mode="multiple"
-          size="large"
-          placeholder={selectedClassId ? "اختر الطلاب" : "اختر الصف أولاً"}
-          disabled={!selectedClassId}
-          options={filteredStudents.map(s => ({
-            label: s.name,
-            value: s.uid
-          }))}
-          style={{ width: '100%' }}
-          maxTagCount="responsive"
-        />
-      </Form.Item>
+      <div>
+        <Row justify="space-between" align="middle" style={{ marginBottom: '8px' }}>
+          <Text strong>الطلاب {selectedClass && `(${selectedClass.name})`}</Text>
+          <Button type="link" size="small" onClick={selectAll} disabled={!selectedClassId || studentsToShow.length === 0}>
+            تحديد الكل ({studentsToShow.length})
+          </Button>
+        </Row>
+        <Form.Item
+          name="studentIds"
+          rules={[{ required: true, message: 'الرجاء اختيار الطلاب' }]}
+        >
+          <Select
+            mode="multiple"
+            size="large"
+            placeholder={
+              !selectedClassId 
+                ? "اختر الصف أولاً" 
+                : studentsToShow.length === 0 
+                  ? "لا يوجد طلاب في هذا الصف" 
+                  : "اختر الطلاب"
+            }
+            disabled={!selectedClassId || studentsToShow.length === 0}
+            options={studentsToShow.map((s, index) => ({
+              key: `student-${s.uid}-${index}`,
+              label: s.name || 'طالب بدون اسم',
+              value: s.uid
+            }))}
+            style={{ width: '100%' }}
+            maxTagCount="responsive"
+          />
+        </Form.Item>
+        {selectedClassId && studentsToShow.length === 0 && studentsWithoutClass.length > 0 && (
+          <div style={{ marginTop: '-16px', marginBottom: '16px', padding: '8px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: '4px' }}>
+            <Text style={{ fontSize: '13px', color: '#d46b08' }}>
+              ⚠️ يوجد {studentsWithoutClass.length} طالب لم يتم تعيين صف لهم. 
+              يرجى تحديث بيانات الطلاب من صفحة "الطلاب".
+            </Text>
+          </div>
+        )}
+      </div>
 
       <Form.Item style={{ marginBottom: 0 }}>
         <Row gutter={[12, 12]}>

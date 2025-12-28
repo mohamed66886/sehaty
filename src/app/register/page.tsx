@@ -1,9 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function RegisterPage() {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Registration logic will be implemented here
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    // Social login logic will be implemented here
+    console.log(`Login with ${provider}`);
+  };
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">

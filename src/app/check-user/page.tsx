@@ -133,7 +133,7 @@ export default function CheckUserPage() {
             {!user && <div className="text-red-600">❌ المستخدم غير موجود في AuthContext</div>}
             {user && !user.uid && <div className="text-red-600">❌ الـ UID غير موجود في user object</div>}
             {user && user.role !== 'student' && (
-              <div className="text-red-600">❌ الدور ليس "student" بل "{user.role}"</div>
+              <div className="text-red-600">❌ الدور ليس &quot;student&quot; بل &quot;{user.role}&quot;</div>
             )}
             {!studentData && user?.uid && (
               <div className="text-red-600">❌ بيانات الطالب غير موجودة في Firestore</div>

@@ -86,13 +86,6 @@ export default function TeacherExamsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
 
-  useEffect(() => {
-    if (user && user.role === 'teacher') {
-      fetchData();
-      fetchClasses();
-    }
-  }, [user]);
-
   const fetchClasses = async () => {
     if (!user?.uid) return;
 
@@ -136,6 +129,13 @@ export default function TeacherExamsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user && user.role === 'teacher') {
+      fetchData();
+      fetchClasses();
+    }
+  }, [user, fetchData, fetchClasses]);
 
   const handleOpenModal = (exam?: Exam) => {
     if (exam) {

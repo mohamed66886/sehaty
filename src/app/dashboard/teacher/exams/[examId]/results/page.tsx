@@ -53,12 +53,6 @@ export default function ExamResultsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'passed' | 'failed' | 'not-completed'>('all');
 
-  useEffect(() => {
-    if (user && params.examId) {
-      fetchExamAndResults();
-    }
-  }, [user, params.examId]);
-
   const fetchExamAndResults = async () => {
     if (!user) return;
     
@@ -138,6 +132,12 @@ export default function ExamResultsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user && params.examId) {
+      fetchExamAndResults();
+    }
+  }, [user, params.examId, fetchExamAndResults]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

@@ -93,13 +93,15 @@ export default function Features() {
       }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+    const currentSection = sectionRef.current;
+
+    if (currentSection) {
+      observer.observe(currentSection);
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentSection) {
+        observer.unobserve(currentSection);
       }
     };
   }, []);
@@ -164,6 +166,7 @@ export default function Features() {
           <div className={`order-1 lg:order-1 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'
           }`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/sec.png" 
               alt="منصة حصتي" 

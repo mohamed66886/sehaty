@@ -52,11 +52,7 @@ export default function TeacherExamQuestionsPage() {
     null,
   );
   const [form] = Form.useForm();
-  useEffect(() => {
-    if (user && params.examId) {
-      fetchExam();
-    }
-  }, [user, params.examId]);
+  
   const fetchExam = async () => {
     try {
       const examDoc = await getDoc(doc(db, "exams", params.examId as string));
@@ -81,6 +77,13 @@ export default function TeacherExamQuestionsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user && params.examId) {
+      fetchExam();
+    }
+  }, [user, params.examId, fetchExam]);
+  
   const handleOpenModal = (question?: ExamQuestion) => {
     if (question) {
       setEditingQuestion(question);
@@ -700,7 +703,7 @@ export default function TeacherExamQuestionsPage() {
                 </div>{" "}
                 <p className="text-sm text-blue-800 dark:text-blue-200 mt-2">
                   {" "}
-                  يجب أن يحتوي عمود "Correct Answer" على الحرف (A أو B أو C أو
+                  يجب أن يحتوي عمود &quot;Correct Answer&quot; على الحرف (A أو B أو C أو
                   D) للخيار الصحيح.{" "}
                 </p>{" "}
               </div>{" "}

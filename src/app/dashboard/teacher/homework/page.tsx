@@ -929,7 +929,7 @@ function HomeworkForm({ students, classes, teacherId, onClose, onSuccess }: Home
           <div style={{ marginTop: '-16px', marginBottom: '16px', padding: '8px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: '4px' }}>
             <Text style={{ fontSize: '13px', color: '#d46b08' }}>
               ⚠️ يوجد {studentsWithoutClass.length} طالب لم يتم تعيين صف لهم. 
-              يرجى تحديث بيانات الطلاب من صفحة "الطلاب".
+              يرجى تحديث بيانات الطلاب من صفحة &quot;الطلاب&quot;.
             </Text>
           </div>
         )}

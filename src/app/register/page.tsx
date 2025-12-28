@@ -65,13 +65,7 @@ export default function RegisterPage() {
               <p className="text-gray-600">انضم إلى منصة حصتي التعليمية</p>
             </div>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border-r-4 border-red-500 rounded">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2 text-right">
                   الاسم الكامل

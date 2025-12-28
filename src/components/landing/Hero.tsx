@@ -75,9 +75,7 @@ export default function Hero() {
           <div className={`w-full lg:w-1/2 order-1 lg:order-2 transition-all duration-1000 delay-200 ${
             isVisible ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-90 -translate-x-20'
           }`}>
-            <div className={`relative w-full max-w-2xl mx-auto rounded-2xl overflow-hidden transition-all duration-300 ${
-              isDarkMode ? 'shadow-2xl shadow-blue-500/20' : ''
-            }`}>
+            <div className={`relative w-full max-w-2xl mx-auto rounded-2xl overflow-hidden transition-all duration-300`}>
               <Image 
                 src="/hero-image.png" 
                 alt="منصة سجلاتك التعليمية"

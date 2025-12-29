@@ -19,6 +19,8 @@ import { auth } from '@/lib/firebase/config';
 import { getUser } from '@/lib/firebase/firestore';
 import type { User, UserRole } from '@/types';
 import { useRouter } from 'next/navigation';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 interface AuthContextType {
   user: User | null;
@@ -69,7 +71,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       let userData = await getUser(userCredential.user.uid);
-      
+
+      // إذا لم يوجد مستند للمستخدم الأدمن، أنشئه تلقائياً
+      if (
+        !userData &&
+        userCredential.user.email === 'mohamedabdouooo28@gmail.com'
+      ) {
+        const adminUser: User = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email!,
+          name: 'مدير النظام',
+          role: 'super_admin',
+          createdAt: serverTimestamp() as any, // حسب نوع createdAt في User
+        };
+        await setDoc(doc(db, 'users', adminUser.uid), adminUser);
+        userData = adminUser;
+      }
+
       if (!userData) {
         throw new Error('User data not found');
       }

@@ -156,7 +156,7 @@ export default function Teachers() {
       isDarkMode ? 'text-gray-300' : 'text-[#0F172A]'
     }`}>
       {teacher.subjects?.[0] || "المادة"} <br />
-      المتكاملة
+    
     </p>
   </div>
 </Link>

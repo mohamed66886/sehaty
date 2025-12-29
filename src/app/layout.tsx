@@ -27,6 +27,10 @@ export default function RootLayout({
   }, [pathname]);
   return (
     <html lang="ar" dir="rtl" className={lalezar.variable}>
+      <head>
+        <title>حصتي - منصة تعليمية</title>
+        <meta name="description" content="منصة حصتي لإدارة المراكز التعليمية مع دعم اللغة العربية وتحكم كامل للأدوار" />
+      </head>
       <body className={lalezar.className}>
         <ThemeProvider>
           <AuthProvider>

@@ -23,7 +23,10 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      // Redirect is handled by AuthContext
+      if (email.trim().toLowerCase() === 'mohamedabdouooo28@gmail.com') {
+        router.push('/dashboard/super-admin');
+        return;
+      }
     } catch (err: any) {
       setError('فشل تسجيل الدخول. يرجى التحقق من البريد الإلكتروني وكلمة المرور.');
       console.error(err);

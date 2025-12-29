@@ -3,12 +3,27 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { getTeacher } from '@/lib/firebase/firestore';
 import type { Teacher } from '@/types';
-import { UserIcon, MailIcon, PhoneIcon, LockIcon, CheckIcon, AlertIcon } from '@/components/icons/Icons';
+import { 
+  UserIcon, 
+  MailIcon, 
+  PhoneIcon, 
+  LockIcon, 
+  CheckIcon, 
+  AlertIcon, 
+  ChevronLeftIcon, 
+  BookIcon, 
+  ClockIcon, 
+  UsersIcon,
+  ShieldIcon,
+  EyeIcon,
+  EyeOffIcon
+} from '@/components/icons/Icons';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface ClassItem {
@@ -18,6 +33,7 @@ interface ClassItem {
   price: string;
   schedule: string;
   duration: string;
+  teacherName?: string;
 }
 
 function SubscribeForm() {
@@ -32,6 +48,8 @@ function SubscribeForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -59,9 +77,15 @@ function SubscribeForm() {
         // Load class data
         const classDoc = await getDoc(doc(db, 'classes', classId));
         if (classDoc.exists()) {
+          const classData = classDoc.data();
           setSelectedClass({
             id: classDoc.id,
-            ...classDoc.data(),
+            name: classData.name || '',
+            subject: classData.subject || '',
+            price: classData.price || '',
+            schedule: classData.schedule || '',
+            duration: classData.duration || '',
+            teacherName: teacherData?.name || ''
           } as ClassItem);
         } else {
           setError('الصف غير موجود');
@@ -189,30 +213,993 @@ function SubscribeForm() {
   };
 
   if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-primary-50 via-white to-primary-50'
-      }`}>
-        <div className="text-center">
-          <div className={`animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-4 ${
-            isDarkMode ? 'border-sky-500' : 'border-primary-600'
-          }`}></div>
-          <p className={`text-lg transition-colors duration-300 ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>جاري تحميل البيانات...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState isDarkMode={isDarkMode} />;
   }
 
   if (error && !teacher) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-primary-50 via-white to-primary-50'
-      }`}>
-        <div className="text-center max-w-md mx-auto px-4">
-          <AlertIcon className="w-20 h-20 text-red-500 mx-auto mb-4" />
-          <h2 className={`text-2xl font-bold mb-2 transition-colors duration-300 ${
+    return <ErrorState error={error} isDarkMode={isDarkMode} />;
+  }
+
+  return (
+    <>
+      {/* ========== MOBILE DESIGN ========== */}
+      <div className="lg:hidden">
+        <div className={`min-h-screen transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+            : 'bg-gradient-to-b from-gray-50 to-white'
+        }`}>
+          {/* Mobile Header */}
+          <div className={`sticky top-0 z-50 px-4 py-3 border-b transition-colors duration-300 ${
+            isDarkMode 
+              ? 'bg-gray-900/95 backdrop-blur-sm border-gray-800' 
+              : 'bg-white/95 backdrop-blur-sm border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <Link
+                href={`/teacher/${teacherId}`}
+                className={`p-2 rounded-lg transition-colors duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                }`}
+              >
+                <ChevronLeftIcon className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              </Link>
+              
+              <h1 className="text-lg font-semibold text-center flex-1">
+                الاشتراك في الصف
+              </h1>
+              
+              <div className="w-10"></div>
+            </div>
+          </div>
+
+          {/* Mobile Content */}
+          <div className="p-4">
+            {/* Class Summary Card - Mobile */}
+            <div className={`rounded-2xl overflow-hidden mb-6 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
+                : 'bg-gradient-to-b from-white to-gray-50'
+            } shadow-xl`}>
+              <div className={`p-4 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-primary-900/30 to-blue-900/30' 
+                  : 'bg-gradient-to-r from-primary-600 to-blue-600'
+              }`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <BookIcon className="w-6 h-6 text-white" />
+                  <div>
+                    <h2 className="text-lg font-bold text-white">ملخص الاشتراك</h2>
+                    <p className="text-sm text-white/80">تأكد من المعلومات قبل المتابعة</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4">
+                {teacher && (
+                  <div className="mb-4">
+                    <div className={`text-xs mb-1 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>المدرس</div>
+                    <div className="flex items-center gap-3">
+                      {teacher.photoURL ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden">
+                          <Image
+                            src={teacher.photoURL}
+                            alt={teacher.name}
+                            width={40}
+                            height={40}
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
+                        }`}>
+                          <UserIcon className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                        </div>
+                      )}
+                      <div className={`text-sm font-semibold ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{teacher.name}</div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedClass && (
+                  <>
+                    <div className="mb-4">
+                      <div className={`text-xs mb-1 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>الصف الدراسي</div>
+                      <div className={`text-base font-bold ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{selectedClass.name}</div>
+                      <div className={`text-sm ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>{selectedClass.subject}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className={`p-3 rounded-xl ${
+                        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <ClockIcon className={`w-4 h-4 ${
+                            isDarkMode ? 'text-primary-400' : 'text-primary-600'
+                          }`} />
+                          <div className={`text-xs ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>الموعد</div>
+                        </div>
+                        <div className={`text-sm font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{selectedClass.schedule}</div>
+                      </div>
+                      <div className={`p-3 rounded-xl ${
+                        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <UsersIcon className={`w-4 h-4 ${
+                            isDarkMode ? 'text-purple-400' : 'text-purple-600'
+                          }`} />
+                          <div className={`text-xs ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>المدة</div>
+                        </div>
+                        <div className={`text-sm font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{selectedClass.duration}</div>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className={`rounded-xl p-4 mb-4 ${
+                      isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={`text-xs ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>الرسوم الشهرية</div>
+                          <div className={`text-lg font-bold ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>{selectedClass.price}</div>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                          isDarkMode 
+                            ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-800/50' 
+                            : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          شاملة المواد
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Note */}
+                <div className={`rounded-xl p-3 ${
+                  isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                }`}>
+                  <div className="flex items-start gap-2">
+                    <CheckIcon className={`w-4 h-4 mt-1 ${
+                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
+                    <p className={`text-xs ${
+                      isDarkMode ? 'text-blue-200' : 'text-blue-900'
+                    }`}>
+                      سيتم التواصل معك لتأكيد الاشتراك عبر البريد الإلكتروني أو الواتساب
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Subscription Form - Mobile */}
+            <div className={`rounded-2xl overflow-hidden mb-6 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
+                : 'bg-gradient-to-b from-white to-gray-50'
+            } shadow-xl`}>
+              <div className={`p-4 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-primary-900/30 to-blue-900/30' 
+                  : 'bg-gradient-to-r from-primary-600 to-blue-600'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <UserIcon className="w-6 h-6 text-white" />
+                  <h2 className="text-lg font-bold text-white">بيانات الاشتراك</h2>
+                </div>
+              </div>
+
+              <div className="p-4">
+                {error && (
+                  <div className={`mb-4 rounded-xl p-3 ${
+                    isDarkMode 
+                      ? 'bg-red-900/20 border border-red-800/50' 
+                      : 'bg-red-50 border border-red-200'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <AlertIcon className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-red-300' : 'text-red-800'
+                      }`}>{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Name */}
+                  <div>
+                    <label htmlFor="name" className={`block text-xs font-semibold mb-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      الاسم الكامل *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 pr-10 text-sm rounded-xl border transition-all ${
+                          errors.name 
+                            ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                            : isDarkMode
+                            ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500'
+                            : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500'
+                        }`}
+                        placeholder="أدخل اسمك الكامل"
+                      />
+                      <UserIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                    {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label htmlFor="email" className={`block text-xs font-semibold mb-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      البريد الإلكتروني *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 pr-10 text-sm rounded-xl border transition-all ${
+                          errors.email 
+                            ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                            : isDarkMode
+                            ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500'
+                            : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500'
+                        }`}
+                        placeholder="example@email.com"
+                        dir="ltr"
+                      />
+                      <MailIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                    {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label htmlFor="phone" className={`block text-xs font-semibold mb-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      رقم الموبايل *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 pr-10 text-sm rounded-xl border transition-all ${
+                          errors.phone 
+                            ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                            : isDarkMode
+                            ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500'
+                            : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500'
+                        }`}
+                        placeholder="01xxxxxxxxx"
+                        dir="ltr"
+                      />
+                      <PhoneIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                    {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label htmlFor="password" className={`block text-xs font-semibold mb-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      كلمة المرور *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 pr-10 text-sm rounded-xl border transition-all ${
+                          errors.password 
+                            ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                            : isDarkMode
+                            ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500'
+                            : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500'
+                        }`}
+                        placeholder="أدخل كلمة المرور"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOffIcon className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <EyeIcon className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+                    <p className={`mt-1 text-xs transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                    }`}>6 أحرف على الأقل</p>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label htmlFor="confirmPassword" className={`block text-xs font-semibold mb-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      تأكيد كلمة المرور *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 pr-10 text-sm rounded-xl border transition-all ${
+                          errors.confirmPassword 
+                            ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                            : isDarkMode
+                            ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500'
+                            : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500'
+                        }`}
+                        placeholder="أعد إدخال كلمة المرور"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOffIcon className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <EyeIcon className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
+                  </div>
+
+                  {/* Privacy Note */}
+                  <div className={`rounded-xl p-3 ${
+                    isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <ShieldIcon className={`w-4 h-4 mt-1 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`} />
+                      <p className={`text-xs ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        بياناتك محمية وستستخدم فقط لأغراض التواصل والاشتراك
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-full text-white py-4 px-6 rounded-xl font-bold text-base transition-all duration-300 active:scale-95 shadow-lg ${
+                      isDarkMode
+                        ? 'bg-gradient-to-r from-primary-600 to-blue-600 disabled:from-gray-700 disabled:to-gray-800'
+                        : 'bg-gradient-to-r from-primary-600 to-blue-600 disabled:from-gray-400 disabled:to-gray-500'
+                    }`}
+                  >
+                    {submitting ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>جاري الاشتراك...</span>
+                      </div>
+                    ) : (
+                      'تأكيد الاشتراك'
+                    )}
+                  </button>
+
+                  {/* Terms */}
+                  <p className={`text-center text-xs leading-relaxed transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    بالاشتراك، أنت توافق على{' '}
+                    <Link href="/terms" className={`font-semibold transition-colors ${
+                      isDarkMode ? 'text-primary-400 hover:text-primary-500' : 'text-primary-600 hover:text-primary-700'
+                    }`}>
+                      الشروط والأحكام
+                    </Link>
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========== DESKTOP DESIGN ========== */}
+      <div className="hidden lg:block">
+        <div className={`min-h-screen transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+            : 'bg-gradient-to-b from-gray-50 to-white'
+        }`}>
+          {/* Desktop Header */}
+          <div className={`sticky top-0 z-50 py-4 transition-colors duration-300 ${
+            isDarkMode 
+              ? 'bg-gray-900/95 backdrop-blur-sm border-b border-gray-800' 
+              : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'
+          }`}>
+            <div className="container mx-auto px-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  <Link
+                    href={`/teacher/${teacherId}`}
+                    className={`flex items-center gap-2 font-semibold transition-colors hover:text-primary-600 ${
+                      isDarkMode ? 'text-gray-300 hover:text-primary-400' : 'text-gray-700 hover:text-primary-600'
+                    }`}
+                  >
+                    <ChevronLeftIcon className="w-5 h-5" />
+                    العودة
+                  </Link>
+                  <h1 className={`text-xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>الاشتراك في الصف</h1>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className={`px-4 py-2 rounded-full text-sm ${
+                    isDarkMode 
+                      ? 'bg-gray-800 text-gray-300 border border-gray-700' 
+                      : 'bg-gray-100 text-gray-700 border border-gray-300'
+                  }`}>
+                    خطوة 1 من 2
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Content */}
+          <div className="container mx-auto px-8 py-12 max-w-7xl">
+            <div className="grid grid-cols-3 gap-8">
+              {/* Left Column - Class Summary */}
+              <div className="col-span-1">
+                <div className={`rounded-2xl overflow-hidden transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
+                    : 'bg-gradient-to-b from-white to-gray-50'
+                } shadow-2xl`}>
+                  <div className={`p-6 ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-primary-900/30 to-blue-900/30' 
+                      : 'bg-gradient-to-r from-primary-600 to-blue-600'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <BookIcon className="w-8 h-8 text-white" />
+                      <div>
+                        <h2 className="text-xl font-bold text-white">ملخص الاشتراك</h2>
+                        <p className="text-sm text-white/80">تأكد من المعلومات قبل المتابعة</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    {teacher && (
+                      <div className="mb-6">
+                        <div className={`text-sm mb-2 transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>المدرس</div>
+                        <div className="flex items-center gap-4">
+                          {teacher.photoURL ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden">
+                              <Image
+                                src={teacher.photoURL}
+                                alt={teacher.name}
+                                width={48}
+                                height={48}
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                              isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
+                            }`}>
+                              <UserIcon className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                            </div>
+                          )}
+                          <div>
+                            <div className={`text-lg font-bold ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>{teacher.name}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <span className={`text-xs ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>متاح للتدريس</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedClass && (
+                      <>
+                        <div className="mb-6">
+                          <div className={`text-sm mb-2 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>الصف الدراسي</div>
+                          <div className={`text-xl font-bold mb-1 ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>{selectedClass.name}</div>
+                          <div className={`text-base ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}>{selectedClass.subject}</div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className={`p-4 rounded-xl ${
+                            isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                          }`}>
+                            <div className="flex items-center gap-3 mb-3">
+                              <ClockIcon className={`w-5 h-5 ${
+                                isDarkMode ? 'text-primary-400' : 'text-primary-600'
+                              }`} />
+                              <div>
+                                <div className={`text-xs ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>الموعد</div>
+                                <div className={`text-sm font-semibold ${
+                                  isDarkMode ? 'text-white' : 'text-gray-900'
+                                }`}>{selectedClass.schedule}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`p-4 rounded-xl ${
+                            isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                          }`}>
+                            <div className="flex items-center gap-3 mb-3">
+                              <UsersIcon className={`w-5 h-5 ${
+                                isDarkMode ? 'text-purple-400' : 'text-purple-600'
+                              }`} />
+                              <div>
+                                <div className={`text-xs ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>المدة</div>
+                                <div className={`text-sm font-semibold ${
+                                  isDarkMode ? 'text-white' : 'text-gray-900'
+                                }`}>{selectedClass.duration}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Price */}
+                        <div className={`rounded-xl p-5 mb-6 ${
+                          isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'
+                        }`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <div className={`text-sm ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                              }`}>الرسوم الشهرية</div>
+                              <div className={`text-2xl font-bold ${
+                                isDarkMode ? 'text-white' : 'text-gray-900'
+                              }`}>{selectedClass.price}</div>
+                            </div>
+                            <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                              isDarkMode 
+                                ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-800/50' 
+                                : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              شاملة جميع المواد
+                            </div>
+                          </div>
+                          <div className={`text-xs ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-600'
+                          }`}>
+                            * تشمل رسوم الاشتراك جميع المواد الدراسية للمرحلة
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Benefits */}
+                    <div className="space-y-3">
+                      <h3 className={`text-sm font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>مميزات الاشتراك</h3>
+                      {[
+                        'دروس مباشرة أونلاين',
+                        'تسجيلات متاحة 24/7',
+                        'اختبارات دورية',
+                        'متابعة شخصية من المدرس'
+                      ].map((benefit, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <CheckIcon className={`w-4 h-4 ${
+                            isDarkMode ? 'text-emerald-400' : 'text-emerald-600'
+                          }`} />
+                          <span className={`text-sm ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Subscription Form */}
+              <div className="col-span-2">
+                <div className={`rounded-2xl overflow-hidden transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
+                    : 'bg-gradient-to-b from-white to-gray-50'
+                } shadow-2xl`}>
+                  <div className={`p-8 ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-primary-900/30 to-blue-900/30' 
+                      : 'bg-gradient-to-r from-primary-600 to-blue-600'
+                  }`}>
+                    <div className="flex items-center gap-4">
+                      <UserIcon className="w-8 h-8 text-white" />
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">بيانات الاشتراك</h2>
+                        <p className="text-sm text-white/80">أدخل بياناتك الشخصية لإنشاء حساب</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    {error && (
+                      <div className={`mb-8 rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-red-900/20 border border-red-800/50' 
+                          : 'bg-red-50 border border-red-200'
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          <AlertIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className={`font-semibold ${
+                              isDarkMode ? 'text-red-300' : 'text-red-800'
+                            }`}>{error}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Name */}
+                        <div>
+                          <label htmlFor="name" className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            الاسم الكامل *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              id="name"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleInputChange}
+                              className={`w-full px-4 py-3 pr-12 text-base rounded-xl border transition-all ${
+                                errors.name 
+                                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                                  : isDarkMode
+                                  ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-900/30'
+                                  : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
+                              }`}
+                              placeholder="أدخل اسمك الكامل"
+                            />
+                            <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          </div>
+                          {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name}</p>}
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                          <label htmlFor="email" className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            البريد الإلكتروني *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="email"
+                              id="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              className={`w-full px-4 py-3 pr-12 text-base rounded-xl border transition-all ${
+                                errors.email 
+                                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                                  : isDarkMode
+                                  ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-900/30'
+                                  : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
+                              }`}
+                              placeholder="example@email.com"
+                              dir="ltr"
+                            />
+                            <MailIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          </div>
+                          {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                          <label htmlFor="phone" className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            رقم الموبايل *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="tel"
+                              id="phone"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              className={`w-full px-4 py-3 pr-12 text-base rounded-xl border transition-all ${
+                                errors.phone 
+                                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                                  : isDarkMode
+                                  ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-900/30'
+                                  : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
+                              }`}
+                              placeholder="01xxxxxxxxx"
+                              dir="ltr"
+                            />
+                            <PhoneIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          </div>
+                          {errors.phone && <p className="mt-2 text-sm text-red-600">{errors.phone}</p>}
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                          <label htmlFor="password" className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            كلمة المرور *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              id="password"
+                              name="password"
+                              value={formData.password}
+                              onChange={handleInputChange}
+                              className={`w-full px-4 py-3 pr-12 text-base rounded-xl border transition-all ${
+                                errors.password 
+                                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                                  : isDarkMode
+                                  ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-900/30'
+                                  : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
+                              }`}
+                              placeholder="أدخل كلمة المرور"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2"
+                            >
+                              {showPassword ? (
+                                <EyeOffIcon className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <EyeIcon className="w-5 h-5 text-gray-400" />
+                              )}
+                            </button>
+                          </div>
+                          {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password}</p>}
+                          <p className={`mt-2 text-sm transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                          }`}>يجب أن تكون 6 أحرف على الأقل</p>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div>
+                          <label htmlFor="confirmPassword" className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            تأكيد كلمة المرور *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              id="confirmPassword"
+                              name="confirmPassword"
+                              value={formData.confirmPassword}
+                              onChange={handleInputChange}
+                              className={`w-full px-4 py-3 pr-12 text-base rounded-xl border transition-all ${
+                                errors.confirmPassword 
+                                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                                  : isDarkMode
+                                  ? 'bg-gray-800 border-gray-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-900/30'
+                                  : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
+                              }`}
+                              placeholder="أعد إدخال كلمة المرور"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOffIcon className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <EyeIcon className="w-5 h-5 text-gray-400" />
+                              )}
+                            </button>
+                          </div>
+                          {errors.confirmPassword && <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>}
+                        </div>
+                      </div>
+
+                      {/* Privacy and Terms */}
+                      <div className={`rounded-xl p-6 ${
+                        isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'
+                      }`}>
+                        <div className="flex items-start gap-4">
+                          <ShieldIcon className={`w-6 h-6 ${
+                            isDarkMode ? 'text-primary-400' : 'text-primary-600'
+                          }`} />
+                          <div>
+                            <h4 className={`text-lg font-semibold mb-2 ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>حماية البيانات</h4>
+                            <p className={`text-sm mb-4 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              بياناتك محمية وسيتم استخدامها فقط لأغراض التواصل وتأكيد الاشتراك. لن نشارك معلوماتك مع أي جهة خارجية.
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                id="terms"
+                                className="w-4 h-4 rounded"
+                                required
+                              />
+                              <label htmlFor="terms" className={`text-sm ${
+                                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                أوافق على{' '}
+                                <Link href="/terms" className="font-semibold text-primary-600 hover:text-primary-700">
+                                  الشروط والأحكام
+                                </Link>{' '}
+                                و{' '}
+                                <Link href="/privacy" className="font-semibold text-primary-600 hover:text-primary-700">
+                                  سياسة الخصوصية
+                                </Link>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Submit Button */}
+                      <div className="pt-4">
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className={`w-full text-white py-4 px-8 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl ${
+                            isDarkMode
+                              ? 'bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 disabled:from-gray-700 disabled:to-gray-800'
+                              : 'bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500'
+                          }`}
+                        >
+                          {submitting ? (
+                            <div className="flex items-center justify-center gap-3">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                              <span>جاري إنشاء الحساب...</span>
+                            </div>
+                          ) : (
+                            'إنشاء الحساب والمتابعة'
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Loading Component
+function LoadingState({ isDarkMode }: { isDarkMode: boolean }) {
+  return (
+    <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-b from-gray-50 to-white'
+    }`}>
+      {/* Mobile Loading */}
+      <div className="lg:hidden text-center">
+        <div className={`animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-6 ${
+          isDarkMode ? 'border-primary-500' : 'border-primary-600'
+        }`}></div>
+        <p className={`text-lg font-medium transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+        }`}>جاري تحميل البيانات...</p>
+        <p className={`text-sm mt-2 transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-500' : 'text-gray-500'
+        }`}>يرجى الانتظار قليلاً</p>
+      </div>
+      
+      {/* Desktop Loading */}
+      <div className="hidden lg:block">
+        <div className="flex items-center justify-center gap-8">
+          <div className="space-y-4">
+            <div className="w-64 h-64 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+            <div className="w-48 h-4 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse mx-auto"></div>
+          </div>
+          <div className="space-y-4 w-96">
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+            <div className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Error Component
+function ErrorState({ error, isDarkMode }: { error: string, isDarkMode: boolean }) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center p-6 transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-b from-gray-50 to-white'
+    }`}>
+      <div className="text-center max-w-md">
+        {/* Mobile Error */}
+        <div className="lg:hidden">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+          }`}>
+            <AlertIcon className={`w-10 h-10 ${isDarkMode ? 'text-red-500' : 'text-red-600'}`} />
+          </div>
+          <h2 className={`text-xl font-bold mb-3 transition-colors duration-300 ${
             isDarkMode ? 'text-white' : 'text-gray-900'
           }`}>حدث خطأ</h2>
           <p className={`mb-6 transition-colors duration-300 ${
@@ -220,336 +1207,50 @@ function SubscribeForm() {
           }`}>{error}</p>
           <Link
             href="/"
-            className={`inline-block text-white px-8 py-3 rounded-xl font-semibold transition-colors ${
-              isDarkMode ? 'bg-sky-600 hover:bg-sky-700' : 'bg-primary-600 hover:bg-primary-700'
-            }`}
+            className={`inline-flex items-center justify-center px-8 py-3 rounded-xl font-medium transition-all duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-primary-600 to-blue-600 text-white hover:scale-105' 
+                : 'bg-gradient-to-r from-primary-600 to-blue-600 text-white hover:scale-105'
+            } shadow-lg`}
           >
             العودة للرئيسية
           </Link>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-primary-50 via-white to-primary-50'
-    }`}>
-      {/* Header */}
-      <div className={`shadow-md transition-colors duration-300 ${
-        isDarkMode ? 'bg-slate-800' : 'bg-white'
-      }`}>
-        <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
+        
+        {/* Desktop Error */}
+        <div className="hidden lg:block">
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+          }`}>
+            <AlertIcon className={`w-12 h-12 ${isDarkMode ? 'text-red-500' : 'text-red-600'}`} />
+          </div>
+          <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>حدث خطأ</h2>
+          <p className={`text-lg mb-8 transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>{error}</p>
+          <div className="flex gap-4 justify-center">
             <Link
-              href={`/teacher/${teacherId}`}
-              className={`flex items-center gap-1.5 sm:gap-2 hover:text-primary-600 transition-colors flex-shrink-0 ${
-                isDarkMode ? 'text-gray-300 hover:text-sky-400' : 'text-gray-600 hover:text-primary-600'
+              href="/"
+              className={`inline-flex items-center justify-center px-8 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-primary-600 to-blue-600 text-white' 
+                  : 'bg-gradient-to-r from-primary-600 to-blue-600 text-white'
+              } shadow-lg hover:shadow-xl`}
+            >
+              العودة للرئيسية
+            </Link>
+            <button
+              onClick={() => window.location.reload()}
+              className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+                isDarkMode 
+                  ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-primary-500' 
+                  : 'bg-gray-100 text-gray-700 border border-gray-300 hover:border-primary-500'
               }`}
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="font-semibold text-sm sm:text-base">العودة</span>
-            </Link>
-            <h1 className={`text-base sm:text-xl font-bold text-center flex-1 transition-colors duration-300 ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>الاشتراك في الصف</h1>
-            <div className="w-16 sm:w-20"></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl py-4 sm:py-6 md:py-12">
-        <div className="grid md:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
-          {/* Subscription Summary - Side Panel */}
-          <div className="md:col-span-2 order-2 md:order-1">
-            <div className={`rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 md:sticky md:top-24 transition-colors duration-300 ${
-              isDarkMode ? 'bg-slate-800' : 'bg-white'
-            }`}>
-              <h2 className={`text-2xl font-bold mb-6 transition-colors duration-300 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>ملخص الاشتراك</h2>
-              
-              {teacher && (
-                <div className="mb-6">
-                  <div className={`text-sm mb-1 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>المدرس</div>
-                  <div className={`text-lg font-semibold transition-colors duration-300 ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
-                  }`}>{teacher.name}</div>
-                </div>
-              )}
-
-              {selectedClass && (
-                <>
-                  <div className="mb-6">
-                    <div className={`text-sm mb-1 transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>الصف</div>
-                    <div className={`text-lg font-semibold transition-colors duration-300 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>{selectedClass.name}</div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className={`text-sm mb-1 transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>المادة</div>
-                    <div className={`text-lg font-semibold transition-colors duration-300 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>{selectedClass.subject}</div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className={`text-sm mb-1 transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>الموعد</div>
-                    <div className={`text-base font-medium transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-900'
-                    }`}>{selectedClass.schedule}</div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className={`text-sm mb-1 transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>مدة الحصة</div>
-                    <div className={`text-base font-medium transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-900'
-                    }`}>{selectedClass.duration}</div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm transition-colors duration-300 ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>السعر الشهري</span>
-                      <span className={`text-2xl font-bold transition-colors duration-300 ${
-                        isDarkMode ? 'text-sky-400' : 'text-primary-600'
-                      }`}>{selectedClass.price}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className={`mt-6 rounded-xl p-4 transition-colors duration-300 ${
-                isDarkMode ? 'bg-sky-900/30' : 'bg-blue-50'
-              }`}>
-                <div className="flex items-start gap-2">
-                  <CheckIcon className={`w-5 h-5 mt-1 flex-shrink-0 transition-colors duration-300 ${
-                    isDarkMode ? 'text-sky-400' : 'text-blue-600'
-                  }`} />
-                  <p className={`text-sm transition-colors duration-300 ${
-                    isDarkMode ? 'text-sky-100' : 'text-blue-900'
-                  }`}>
-                    سيقوم المدرس بمراجعة طلب الاشتراك وسيتم التواصل معك عبر البريد الإلكتروني أو الواتساب
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Subscription Form */}
-          <div className="md:col-span-3 order-1 md:order-2">
-            <div className={`rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 lg:p-8 transition-colors duration-300 ${
-              isDarkMode ? 'bg-slate-800' : 'bg-white'
-            }`}>
-              <h2 className={`text-xl sm:text-2xl font-bold mb-4 sm:mb-6 transition-colors duration-300 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>بيانات الاشتراك</h2>
-
-              {error && (
-                <div className={`mb-6 border rounded-xl p-4 transition-colors duration-300 ${
-                  isDarkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'
-                }`}>
-                  <div className="flex items-start gap-2">
-                    <AlertIcon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                    <p className={`transition-colors duration-300 ${
-                      isDarkMode ? 'text-red-300' : 'text-red-800'
-                    }`}>{error}</p>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                {/* Name */}
-                <div>
-                  <label htmlFor="name" className={`block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    الاسم الكامل *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 focus:outline-none focus:ring-4 transition-all ${
-                        errors.name 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-100' 
-                          : isDarkMode
-                          ? 'bg-slate-900 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-900/30'
-                          : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-primary-100'
-                      }`}
-                      placeholder="أدخل اسمك الكامل"
-                    />
-                    <UserIcon className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </div>
-                  {errors.name && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.name}</p>}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className={`block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    البريد الإلكتروني *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 focus:outline-none focus:ring-4 transition-all ${
-                        errors.email 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-100' 
-                          : isDarkMode
-                          ? 'bg-slate-900 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-900/30'
-                          : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-primary-100'
-                      }`}
-                      placeholder="example@email.com"
-                      dir="ltr"
-                    />
-                    <MailIcon className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </div>
-                  {errors.email && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.email}</p>}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label htmlFor="phone" className={`block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    رقم الموبايل *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 focus:outline-none focus:ring-4 transition-all ${
-                        errors.phone 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-100' 
-                          : isDarkMode
-                          ? 'bg-slate-900 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-900/30'
-                          : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-primary-100'
-                      }`}
-                      placeholder="01xxxxxxxxx"
-                      dir="ltr"
-                    />
-                    <PhoneIcon className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.phone}</p>}
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label htmlFor="password" className={`block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    كلمة المرور *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 focus:outline-none focus:ring-4 transition-all ${
-                        errors.password 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-100' 
-                          : isDarkMode
-                          ? 'bg-slate-900 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-900/30'
-                          : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-primary-100'
-                      }`}
-                      placeholder="أدخل كلمة المرور"
-                    />
-                    <LockIcon className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </div>
-                  {errors.password && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.password}</p>}
-                  <p className={`mt-1 text-xs transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                  }`}>يجب أن تكون 6 أحرف على الأقل</p>
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label htmlFor="confirmPassword" className={`block text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    تأكيد كلمة المرور *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 focus:outline-none focus:ring-4 transition-all ${
-                        errors.confirmPassword 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-100' 
-                          : isDarkMode
-                          ? 'bg-slate-900 border-slate-700 text-white focus:border-sky-500 focus:ring-sky-900/30'
-                          : 'bg-white border-gray-200 text-gray-900 focus:border-primary-500 focus:ring-primary-100'
-                      }`}
-                      placeholder="أعد إدخال كلمة المرور"
-                    />
-                    <LockIcon className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </div>
-                  {errors.confirmPassword && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.confirmPassword}</p>}
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className={`w-full text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg transition-all duration-300 transform active:scale-95 sm:hover:scale-105 disabled:hover:scale-100 shadow-lg hover:shadow-xl disabled:cursor-not-allowed ${
-                    isDarkMode
-                      ? 'bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 disabled:from-gray-600 disabled:to-gray-700'
-                      : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 disabled:from-gray-400 disabled:to-gray-500'
-                  }`}
-                >
-                  {submitting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
-                      <span>جاري الاشتراك...</span>
-                    </div>
-                  ) : (
-                    'تأكيد الاشتراك'
-                  )}
-                </button>
-
-                <p className={`text-center text-xs sm:text-sm leading-relaxed transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  بالاشتراك، أنت توافق على{' '}
-                  <Link href="/terms" className={`font-semibold transition-colors ${
-                    isDarkMode ? 'text-sky-400 hover:text-sky-500' : 'text-primary-600 hover:text-primary-700'
-                  }`}>
-                    الشروط والأحكام
-                  </Link>
-                </p>
-              </form>
-            </div>
+              إعادة المحاولة
+            </button>
           </div>
         </div>
       </div>
@@ -559,9 +1260,7 @@ function SubscribeForm() {
 
 export default function SubscribePage() {
   return (
-    <Suspense fallback={
-      <SuspenseFallback />
-    }>
+    <Suspense fallback={<SuspenseFallback />}>
       <SubscribeForm />
     </Suspense>
   );
@@ -573,12 +1272,12 @@ function SuspenseFallback() {
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
       isDarkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-        : 'bg-gradient-to-br from-primary-50 via-white to-blue-50'
+        ? 'bg-gradient-to-b from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-b from-gray-50 to-white'
     }`}>
       <div className="text-center">
         <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
-          isDarkMode ? 'border-sky-400' : 'border-primary-600'
+          isDarkMode ? 'border-primary-500' : 'border-primary-600'
         }`}></div>
         <p className={`mt-4 transition-colors duration-300 ${
           isDarkMode ? 'text-gray-400' : 'text-gray-600'

@@ -83,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: 'مدير النظام',
           role: 'super_admin',
           createdAt: serverTimestamp() as any, // حسب نوع createdAt في User
+          phone: '', // حقل الهاتف مطلوب حسب نوع User
         };
         await setDoc(doc(db, 'users', adminUser.uid), adminUser);
         userData = adminUser;

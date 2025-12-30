@@ -211,32 +211,32 @@ export default function Footer() {
             
             {/* Social Media */}
             <div className="flex gap-3 mt-4 justify-center">
-              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.facebook.com/share/1KRCwXm6rG/?mibextid=wwXIfr" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Facebook">
+              }`} aria-label="Facebook" target="_blank" rel="noopener noreferrer">
                 <FacebookIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://x.com/mo7amed_rashad_?s=21" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Twitter">
+              }`} aria-label="Twitter" target="_blank" rel="noopener noreferrer">
                 <TwitterIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.instagram.com/m7md_rsh3d?igsh=eWZxMTM1cm5teTl3" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Instagram">
+              }`} aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                 <InstagramIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.linkedin.com/in/mohamed-abdou-rashad-898348335?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="LinkedIn">
+              }`} aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
                 <LinkedInIcon className="w-5 h-5" />
               </a>
             </div>
@@ -345,7 +345,7 @@ export default function Footer() {
                 }`} />
                 <span className={`text-base transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>info@hesaty.com</span>
+                }`}>rashad@hesaty.com</span>
               </li>
               <li className="flex items-center gap-2">
                 <PhoneIcon className={`w-5 h-5 transition-colors duration-300 ${
@@ -353,7 +353,7 @@ export default function Footer() {
                 }`} />
                 <span className={`text-base transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>+20 123 456 7890</span>
+                }`}>+20 106 209 7359</span>
               </li>
               <li className="flex items-center gap-2">
                 <LocationIcon className={`w-5 h-5 transition-colors duration-300 ${
@@ -367,32 +367,32 @@ export default function Footer() {
             
             {/* Social Media */}
             <div className="flex gap-4 mt-4">
-              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.facebook.com/share/1KRCwXm6rG/?mibextid=wwXIfr" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Facebook">
+              }`} aria-label="Facebook" target="_blank" rel="noopener noreferrer">
                 <FacebookIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://x.com/mo7amed_rashad_?s=21" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Twitter">
+              }`} aria-label="Twitter" target="_blank" rel="noopener noreferrer">
                 <TwitterIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.instagram.com/m7md_rsh3d?igsh=eWZxMTM1cm5teTl3" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="Instagram">
+              }`} aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                 <InstagramIcon className="w-5 h-5" />
               </a>
-              <a href="#" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              <a href="https://www.linkedin.com/in/mohamed-abdou-rashad-898348335?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                 isDarkMode 
                   ? 'bg-slate-800 hover:bg-slate-700 text-sky-400' 
                   : 'bg-primary-100 hover:bg-primary-200 text-primary-600'
-              }`} aria-label="LinkedIn">
+              }`} aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
                 <LinkedInIcon className="w-5 h-5" />
               </a>
             </div>
